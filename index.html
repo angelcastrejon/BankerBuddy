@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en" ng-app="app">
+<head>
+  <meta charset="utf-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Banker Buddy</title>
+  <script type="text/javascript" charset="utf-8">
+  // Wait for Cordova to load
+  //
+  document.addEventListener("deviceready", onDeviceReady, false);
+
+  // Cordova is ready
+  //
+  function onDeviceReady() {
+	var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
+	db.transaction(CreateDatabase, errorDB, successDB);
+  }
+  
+  function CreateDatabase(tx) {
+	//tx.executeSql("DROP TABLE Users");
+	//tx.executeSql("DROP TABLE Withdraw");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS Users (ID INT PRIMARY KEY, Username TEXT, Pin INT, Threshold REAL, Email TEXT)");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS BalanceHistory (ID INT, Timestamp TEXT, Balance REAL)");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS Deposit (ID INT, Timestamp TEXT, Balance REAL)");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS Withdraw (ID INT, Timestamp TEXT, Balance REAL)");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS CurrentID (CurrentUser INT, ID INT)");
+	//tx.executeSql("INSERT INTO CurrentID VALUES(0, 0)");
+	//tx.executeSql("INSERT INTO Users VALUES(1, 'DavidR', 1234, 1.0, 'test')");
+	//tx.executeSql("INSERT INTO Deposit VALUES(2, '2014-10-30', 80.0)");
+	//tx.executeSql("INSERT INTO Withdraw VALUES(2, '2014-10-31', -30.0)");
+	//tx.executeSql("INSERT INTO BalanceHistory VALUES(2, '2014-11-2', 50.0)");
+	//tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-2', 30.0)");
+  }
+  
+  function errorDB(error) {
+	alert("Database Error : " + error);
+  }
+  
+  function successDB() {
+  }
+  
+  </script>
+
+  <link rel="stylesheet" href="lib/onsen/css/onsenui.css">  
+  <link rel="stylesheet" href="lib/onsen/css/onsen-css-components.css">  
+  <link rel="stylesheet" href="styles/app.css"/>
+
+  <script src="lib/onsen/js/angular/angular.js"></script>    
+  <script src="lib/onsen/js/onsenui.js"></script>    
+  <script src="js/jquery.min.js"></script>
+  <script src="cordova.js"></script>
+  <script src="js/highcharts.js"></script>
+  <script src="js/modules/exporting.js"></script>
+
+  <script>
+    var module = angular.module('app', ['onsen']);
+	
+	module.factory('QueryService', function(){
+	
+		function queryDatabase($string, $col, $callBack){
+			var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
+			db.transaction(queryDB, errorDB);
+			
+			function queryDB(tx){
+				tx.executeSql($string, [], querySelectSuccess, errorQ);
+			}
+			
+			function querySelectSuccess(tx, results){
+				if ($col != ""){
+					for (var i = 0; i < results.rows.length; i++){
+					
+						if ($col == "Username"){
+							$callBack.array.push(results.rows.item(i).Username);
+						}
+						
+						if ($col == "Pin"){
+							$callBack.array.push(results.rows.item(i).Pin);
+						}
+						
+						if ($col == "ID"){
+							$callBack.array.push(results.rows.item(i).ID);
+						}
+					}
+				}
+			}
+
+			function errorQ(error){
+				alert("Error processing SQL : " + error);
+			}
+	
+			function errorDB(error){
+				alert("Database Error: " + error);
+			}
+		}
+		
+		return{
+			queryDatabase : queryDatabase
+		}
+	});		
+	
+	module.controller('loginCtrl', function($scope, QueryService){
+	
+		$scope.username = "";
+		$scope.pin = "";
+	
+		$scope.validateLogin = function(){
+		
+			if( !$scope.username ){
+				alert("Please Enter a Username.");
+			}
+			else if( !$scope.pin ){
+				alert("Please Enter a Pin.");
+			}
+			else {
+				var uname = { array: [] };
+				var userID = { array: [] };
+				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", uname);
+				QueryService.queryDatabase("SELECT ID FROM Users WHERE Username = '" + $scope.username + "'", "ID", userID);
+				setTimeout(function(){
+					if(uname.array.length == 0){
+						alert("That Username does not exist.");
+					}
+					}, 100);
+				
+				var pass = { array: [] };
+				QueryService.queryDatabase("SELECT Pin FROM Users WHERE Username = '" + $scope.username + "'", "Pin", pass);
+				setTimeout(function(){
+					if(uname.array.length == 0){
+					}
+					else if($scope.pin != pass.array[0]){
+						alert("That Pin is incorrect.");
+					}
+					else {
+						QueryService.queryDatabase("UPDATE CurrentID SET ID = " + userID.array[0] + " WHERE CurrentUser = 0;", "", "");
+
+						setTimeout(function(){	
+							pushApp();
+						}, 100);
+					}
+					}, 100);
+			}
+			
+			function pushApp(){			
+				myNavigator.pushPage('app.html', { animation : 'fade' } );
+			}
+		}		
+	});
+
+	module.controller('createCtrl', function($scope, QueryService){
+
+		$scope.username = "";
+		$scope.email = "";
+		$scope.pin = "";
+		$scope.confirmpin = "";
+		$scope.balance = "";
+		$scope.threshold = "";
+	
+		$scope.createAccount = function(){
+			
+			if( !$scope.username ){
+				alert("Please Enter a Username.");
+			}
+			else if( !$scope.email ){
+				alert("Please Enter an email.");
+			}
+			else if( !$scope.pin ){
+				alert("Please Enter a Pin.");
+			}
+			else if( !$scope.confirmpin ){
+				alert("Please Confirm Your Pin.");
+			}
+			else if($scope.pin != $scope.confirmpin){
+				alert("Pin Does Not Match.");
+			}
+			else {
+				var uname = { array: [] };
+				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", uname);
+				setTimeout(function(){
+					if(uname.array.length != 0){
+						alert("Sorry.  That username is already taken.");
+					}
+					else {
+						pushBalance();
+					}
+					}, 100);	
+			}
+			
+			function pushBalance(){		
+				var maxID = { array: [] };
+				var newID;
+				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", maxID);
+				setTimeout(function(){
+					newID = maxID.array[0] + 1;
+					}, 100);	
+				setTimeout(function(){
+					QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "')", "", "");
+
+					myNavigator.pushPage('balance.html', { animation : 'slide' } );
+					}, 100);				
+			}
+		}
+
+		$scope.insertAccount = function(){
+			if( !$scope.balance ){
+				alert("Please Enter a Balance.");
+			}
+			else if( !$scope.threshold ){
+				alert("Please Enter an Threshold.");
+			}
+			else {
+				var maxID = { array: [] };
+				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", maxID);			
+
+				setTimeout(function(){				
+					QueryService.queryDatabase("UPDATE Users SET Threshold = " + $scope.threshold + " WHERE ID = " + maxID.array[0], "", "");
+					QueryService.queryDatabase("UPDATE CurrentID SET ID = " + maxID.array[0] + " WHERE CurrentUser = 0", "", "");
+					
+					pushApp();
+					}, 100);	
+			}
+
+			function pushApp(){			
+				myNavigator.pushPage('app.html', { animation : 'fade' } )
+			}
+		}	
+	});
+
+	module.controller('PopulateHomeData', function($scope, QueryService, $timeout){
+	
+			var IDcurrent = { array: [] };
+			var amount = { array: [] };
+			var time = { array: [] };
+			var bal = { array: [] };
+			
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", IDcurrent);
+			
+			$timeout(function(){				
+				QueryService.queryDatabase("SELECT Timestamp, Balance AS ID FROM Deposit WHERE ID = " + IDcurrent.array[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", amount);
+				QueryService.queryDatabase("SELECT Timestamp AS ID, Balance FROM Deposit WHERE ID = " + IDcurrent.array[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", time);
+			
+				$timeout(function(){
+
+					$scope.rows = [];
+					for(var i = 0; i < amount.array.length; i++){
+						$scope.rows.push({
+							'Date': String(time.array[i]),
+							'Amount': String(amount.array[i])});
+					}					
+					}, 100);
+				}, 100);
+			
+			$timeout(function(){
+				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", bal);
+				
+				$timeout(function(){
+					$scope.balance = bal.array[0];
+					}, 100);
+				}, 100);
+				
+		$timeout(function(){		
+		$('#container').highcharts({
+			title: {
+				text: 'Balance History',
+				x: -20 //center
+			},
+			xAxis: {
+				categories: ['9/15', '9/22', '9/29', '10/6', '10/13', '10/20',
+					'10/27', '11/3']
+			},
+			yAxis: {
+				title: {
+					text: 'Balance ($)'
+				},
+				plotLines: [{
+					value: 0,
+					width: 1,
+					color: '#808080'
+				}]
+			},
+			tooltip: {
+				valuePrefix: '$'
+			},
+			series: [{
+				name: 'David',
+				data: [27.0, 26.9, 29.5, 34.5, 38.2, 41.5, 45.2, 50.0]
+			}, {
+				name: 'Threshold',
+				data: [30, 30, 30, 30, 30, 30, 30, 30]
+			}]
+		});
+		}, 300);
+			
+			
+	});
+  </script>
+
+
+  <style>
+    .page--menu-page__content {
+      background-color: #333;
+      color: white;
+    }
+	
+	.page--login__content {
+		background-color: #d3d3d3;
+	}
+
+    .menu-close,
+    .menu-close > .toolbar-button {
+      color: #999;
+    }
+
+    .menu-list,
+    .menu-item:first-child,
+    .menu-item:last-child,
+    .menu-item {
+      background-color: transparent;
+      background-image: none !important;
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .menu-item {
+      padding: 0 0 0 20px;
+      line-height: 52px;
+      height: 52px;
+      text-shadow: rgba(0, 0, 0, 0.4) 0px 1px 0px;
+    }
+
+    .menu-item:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-notification {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 14px;
+      height: 16px;
+      line-height: 16px;
+      min-width: 16px;
+      font-weight: 600;
+    }
+
+    .bottom-menu-list,
+    .bottom-menu-item:first-child,
+    .bottom-menu-item:last-child,
+    .bottom-menu-item {
+      border-color: #393939;
+      background-color: transparent;
+      background-image: none !important;
+      color: #ccc;
+    }
+
+    .bottom-menu-item:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+  
+</head>
+
+<body> 
+
+<ons-navigator title="Navigator" var="myNavigator">
+
+	<ons-page modifier="login">
+		<div style="background-color:#1AAF5D; 
+					margin-top:15%; margin-left:auto; margin-right:auto; text-align: center; height:420px; width:90%; border:1px inset #3e3e3e; box-shadow: 10px 10px 5px #3e3e3e;" ng-controller="loginCtrl">
+			<img src="img\icon.png" style="width: 50%; margin-top:10%">
+			<div style="margin-top:10%">
+				<ons-icon icon="ion-android-social-user"></ons-icon>
+				<input type="text" class="text-input" placeholder="Username" ng-model="username">
+			</div>
+			<div style="margin-top:1%">
+				<ons-icon icon="ion-pound"></ons-icon>
+				<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin">
+			</div> 
+			<br>
+			<ons-button modifier="cta" ng-click="validateLogin()">
+			Sign In
+			</ons-button>
+		</div>
+		<br>
+		<ons-col align="center">
+			<ons-button modifier="" onclick="myNavigator.pushPage('create.html', { animation : 'fade' } )">
+			Create Account
+			</ons-button>
+		</ons-col>
+	</ons-page>		
+		
+</ons-navigator>
+	<ons-template id="create.html">
+		<ons-page>
+			<div style="margin-top:6%; margin-left:auto; margin-right:auto; text-align: center; height:320px; width:90%" ng-controller="createCtrl">
+				<img src="img\icon1.png" style="width: 50%; margin-top:10%">
+				<div style="margin-top:10%">
+					<ons-icon icon="ion-edit"></ons-icon>
+					<input type="text" class="text-input" placeholder="Username" ng-model="username">
+				</div>
+				<div style="margin-top:1%">
+					<ons-icon icon="ion-email"></ons-icon>
+					<input type="text" class="text-input" placeholder="Email" ng-model="email">
+				</div>  
+				<div style="margin-top:1%">
+					<ons-icon icon="ion-pound"></ons-icon>
+					<input type="tel" class="text-input" placeholder="Pin" ng-model="pin">
+				</div> 
+				<div style="margin-top:1%">
+					<ons-icon icon="ion-pound"></ons-icon>
+					<input type="tel" class="text-input" placeholder="Confirm Pin" ng-model="confirmpin">
+				</div> 
+				<br>
+				<ons-button modifier="outline" ng-click="createAccount()">
+					<ons-icon icon="ion-chevron-right" size="40px"></ons-icon>
+				</ons-button>
+			</div>
+		</ons-page>	
+	</ons-template>
+
+	<ons-template id="balance.html">
+		<ons-page>
+			<div style="margin-top:6%; margin-left:auto; margin-right:auto; text-align: center; height:320px; width:90%" ng-controller="createCtrl">
+				<img src="img\icon.png" style="width: 50%; margin-top:10%">
+				<div style="margin-top:10%">
+					<ons-icon icon="ion-social-usd-outline"></ons-icon>
+					<input type="tel" class="text-input" placeholder="Balance" ng-model="balance">
+				</div> 
+				<div style="margin-top:1%">
+					<ons-icon icon="ion-stats-bars"></ons-icon>
+					<input type="tel" class="text-input" placeholder="Threshold" ng-model="threshold">
+				</div> 
+				<br>
+				<ons-button modifier="outline" ng-click="insertAccount()">
+					<ons-icon icon="ion-android-add" size="40px"></ons-icon>
+				</ons-button>
+			</div>
+		</ons-page>	
+	</ons-template>
+	
+	<ons-template id="app.html">
+		<ons-sliding-menu
+			menu-page="menu.html" main-page="page0.html" side="left"
+			var="menu" type="reveal" max-slide-distance="260px" swipable="true">
+		</ons-sliding-menu>
+    </ons-template>
+	
+	<ons-template id="menu.html">
+		<ons-page modifier="menu-page">
+			<ons-toolbar modifier="transparent"></ons-toolbar>
+
+			<ons-list class="menu-list">
+				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page0.html', {closeMenu: true})">
+					<ons-icon icon="ion-home"></ons-icon>
+					Home
+				</ons-list-item>
+				
+			<ons-list class="menu-list">
+				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page1.html', {closeMenu: true})">
+					<ons-icon icon="ion-plus"></ons-icon>
+					Deposit
+				</ons-list-item>
+
+				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page2.html', {closeMenu: true})">
+					<ons-icon icon="ion-minus"></ons-icon>
+					Withdraw
+				</ons-list-item>
+
+				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page3.html', {closeMenu: true})">
+					<ons-icon icon="ion-arrow-graph-up-right"></ons-icon>
+					Visualization
+				</ons-list-item>
+			</ons-list>
+
+		  <br>
+
+			<ons-list class="bottom-menu-list">
+				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page4.html', {closeMenu: true})">
+				Settings
+				</ons-list-item>
+
+				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page5.html', {closeMenu: true})">
+				`About
+				</ons-list-item>
+
+				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page6.html', {closeMenu: true})">
+				Send feedback
+				</ons-list-item>
+			</ons-list>
+		</ons-page>
+	</ons-template>
+
+	<ons-template id="page0.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Home</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 10px;">
+				<ons-col align="center">
+					<div ng-controller="PopulateHomeData">
+						<div>
+						<table style="border: 1px solid black">
+						<thead style="background-color: LightBlue">
+							<tr>
+								<th width="200">Date</th>
+								<th width="200">Amount</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="rowContent in rows">
+								<td>{{rowContent.Date}}</td>
+								<td>{{rowContent.Amount}}</td>
+							</tr>
+						</tbody>
+						</table>   
+						</div>
+						<div style="font-size: 36px"><p><b>Balance:  ${{balance}}</b></p></div>
+						<div id="container" style="min-width: 100%; height: 225px"></div>
+					</div>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	</ons-template>
+
+
+	<ons-template id="page1.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Deposit</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	</ons-template>
+
+	<ons-template id="page2.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Withdraw</div>
+			</ons-toolbar>
+
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+				</ons-col>
+			</ons-row>
+
+		</ons-page>
+	</ons-template>
+	 
+	<ons-template id="page3.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Visualization</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	 </ons-template>
+
+	<ons-template id="page4.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Settings</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	</ons-template>
+
+	<ons-template id="page5.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Help</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	</ons-template>
+
+	<ons-template id="page6.html">
+		<ons-page>
+			<ons-toolbar>
+				<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+					<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+				</div>
+				<div class="center">Send Feedback</div>
+			</ons-toolbar>
+
+			<ons-row style="margin-top: 100px;">
+				<ons-col align="center">
+					<ons-button modifier="light" ng-click="menu.toggleMenu()">
+					Toggle Menu
+					</ons-button>
+					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
+				</ons-col>
+			</ons-row>
+		</ons-page>
+	</ons-template
+
+</body>
+</html>
