@@ -12,6 +12,7 @@
 
   // Cordova is ready
   //
+
   function onDeviceReady() {
 	var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
 	db.transaction(CreateDatabase, errorDB, successDB);
@@ -363,26 +364,38 @@
 
 <ons-navigator title="Navigator" var="myNavigator">
 
-	<ons-page modifier="login">
-		<div style="background-color:#1AAF5D; 
-					margin-top:15%; margin-left:auto; margin-right:auto; text-align: center; height:420px; width:90%; border:1px inset #3e3e3e; box-shadow: 10px 10px 5px #3e3e3e;" ng-controller="loginCtrl">
-			<img src="img\icon.png" style="width: 50%; margin-top:10%">
-			<div style="margin-top:10%">
-				<ons-icon icon="ion-android-social-user"></ons-icon>
-				<input type="text" class="text-input" placeholder="Username" ng-model="username">
-			</div>
-			<div style="margin-top:1%">
-				<ons-icon icon="ion-pound"></ons-icon>
-				<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin">
-			</div> 
-			<br>
-			<ons-button modifier="cta" ng-click="validateLogin()">
-			Sign In
-			</ons-button>
-		</div>
-		<br>
+	<ons-page modifier="login" style="background-color:#1AAF5D;">
 		<ons-col align="center">
-			<ons-button modifier="" onclick="myNavigator.pushPage('create.html', { animation : 'fade' } )">
+			<div ng-controller="loginCtrl">
+				<img src="img\icon.png" style="position:relative; width: 50%; margin-top:10%">
+				<div style="margin-top:5%;">
+					<ons-icon icon="ion-android-social-user"></ons-icon>
+					<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height: 50px;
+  					  font-size: 100%;">
+				</div>
+				<div style="margin-top:2%;">
+					<ons-icon icon="ion-pound"></ons-icon>
+					<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;">
+				</div> 
+				<br>
+			
+				<ons-button modifier="cta" ng-click="validateLogin()">
+					Sign In
+				</ons-button>
+			</div>
+		</ons-col>
+		<hr style="width:75%;">
+		<ons-col align="center">
+			<ons-button modifier="" onclick="myNavigator.pushPage('create.html', { animation : 'fade' } )" style="padding-top:10px;">
 			Create Account
 			</ons-button>
 		</ons-col>
@@ -390,29 +403,51 @@
 		
 </ons-navigator>
 	<ons-template id="create.html">
-		<ons-page>
-			<div style="margin-top:6%; margin-left:auto; margin-right:auto; text-align: center; height:320px; width:90%" ng-controller="createCtrl">
-				<img src="img\icon1.png" style="width: 50%; margin-top:10%">
-				<div style="margin-top:10%">
-					<ons-icon icon="ion-edit"></ons-icon>
-					<input type="text" class="text-input" placeholder="Username" ng-model="username">
-				</div>
-				<div style="margin-top:1%">
-					<ons-icon icon="ion-email"></ons-icon>
-					<input type="text" class="text-input" placeholder="Email" ng-model="email">
-				</div>  
-				<div style="margin-top:1%">
-					<ons-icon icon="ion-pound"></ons-icon>
-					<input type="tel" class="text-input" placeholder="Pin" ng-model="pin">
-				</div> 
-				<div style="margin-top:1%">
-					<ons-icon icon="ion-pound"></ons-icon>
-					<input type="tel" class="text-input" placeholder="Confirm Pin" ng-model="confirmpin">
-				</div> 
-				<br>
-				<ons-button modifier="outline" ng-click="createAccount()">
-					<ons-icon icon="ion-chevron-right" size="40px"></ons-icon>
-				</ons-button>
+		<ons-page style="background-color:#1AAF5D;">
+			<div style="" ng-controller="createCtrl">
+				<ons-col align="center">
+					<img src="img\icon.png" style="width: 50%; margin-top:10%">
+					<div style="margin-top:5%">
+						<ons-icon icon="ion-android-social-user"></ons-icon>
+						<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;">
+					</div>
+					<div style="margin-top:1%">
+						<ons-icon icon="ion-email"></ons-icon>
+						<input type="text" class="text-input" placeholder="Email" ng-model="email" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;">
+					</div>  
+					<div style="margin-top:1%">
+						<ons-icon icon="ion-pound"></ons-icon>
+						<input type="tel" class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;">
+					</div> 
+					<div style="margin-top:1%">
+						<ons-icon icon="ion-pound"></ons-icon>
+						<input type="tel" class="text-input" placeholder="Confirm Pin" ng-model="confirmpin" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;">
+					</div> 
+					<br>
+					<ons-button modifier="" ng-click="createAccount()">Continue
+						<!-- <ons-icon icon="ion-chevron-right" size="40px"></ons-icon> -->
+					</ons-button>
+				</ons-col>
 			</div>
 		</ons-page>	
 	</ons-template>
@@ -529,7 +564,7 @@
 
 
 	<ons-template id="page1.html">
-		<ons-page>
+		<ons-page id="page1">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -551,7 +586,7 @@
 	</ons-template>
 
 	<ons-template id="page2.html">
-		<ons-page>
+		<ons-page id="page2">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -574,7 +609,7 @@
 	</ons-template>
 	 
 	<ons-template id="page3.html">
-		<ons-page>
+		<ons-page id="page3">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -596,7 +631,7 @@
 	 </ons-template>
 
 	<ons-template id="page4.html">
-		<ons-page>
+		<ons-page id="page4">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -618,7 +653,7 @@
 	</ons-template>
 
 	<ons-template id="page5.html">
-		<ons-page>
+		<ons-page id="page5">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -627,32 +662,63 @@
 				</div>
 				<div class="center">About `A</div>
 			</ons-toolbar>
-
-			<ons-row style="margin-top: 100px;">
+			
+			<!-- modal for David -->
+			<ons-modal var="modal">
+			  <ons-icon icon="ion-loading-c" spin="true"></ons-icon>
+			  <br><br>
+			  David works as a ___. He likes Papa Johns Pizza.
+			</ons-modal>
+			<!--  end of modal for David-->
+			
+			<ons-row style="margin-top: 20px;">
+				<p>When we aren't making improvements to this project we are at work.</p>
 				<ons-col align="center">
-					<ons-button modifier="light" ng-click="menu.toggleMenu()">
-					We are `A
-					</ons-button>
-					<div>
-						<h1>Developers</h1>
-					</div>
-					
-					<li>David</li>
-					<li>Angel</li>
-					<li>Matt</li>
-					<div>
-						<h1>Documentors</h1>
-					</div>
-					<li>Anthony</li>
-					<li>Matt</li>
-					
+			        <ul class="list">
+						<li class="list__header">
+							Developers
+						</li>
+						<li class="list__item">
+							David
+							<textarea class="textarea textarea--transparent" style="width:100%;height:50px;margin-top:4px;" placeholder="Works in _. Recently found out he likes jalapeños on his pizza."></textarea>
+						</li>
+						<li class="list__item">
+							Angel
+							<textarea class="textarea textarea--transparent" style="width:100%;height:50px;margin-top:4px;" placeholder="Works in the big data realm. Recently introduced David to the wonders of jalapeños on pizza."></textarea>
+						</li>
+					</ul>
+			        <ul class="list">
+						<li class="list__header">
+							Documenters
+						</li>
+						<li class="list__item">
+							Anthony
+							<textarea class="textarea textarea--transparent" style="width:100%;height:50px;margin-top:4px;" placeholder="Works in _. Recently _."></textarea>
+						</li>
+						<li class="list__item">
+							Matias
+							<textarea class="textarea textarea--transparent" style="width:100%;height:50px;margin-top:4px;" placeholder="Makes dreams come true when he goes to work. Recently _."></textarea>
+
+						</li>
+					</ul>
+					<ul class="list">
+						<li class="list__header">
+							Tester
+						</li>
+						<li class="list__item">
+							Matt
+							<textarea class="textarea textarea--transparent" style="width:100%;height:50px;margin-top:4px;" placeholder="Works in the computer lab. Recently _."></textarea>
+						</li>
+
+					</ul>
+
 				</ons-col>
 			</ons-row>
 		</ons-page>
 	</ons-template>
 
 	<ons-template id="page6.html">
-		<ons-page>
+		<ons-page id="page6">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
