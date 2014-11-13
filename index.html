@@ -26,10 +26,6 @@
 	tx.executeSql("CREATE TABLE IF NOT EXISTS Withdraw (ID INT, Timestamp TEXT, Balance REAL)");
 	tx.executeSql("CREATE TABLE IF NOT EXISTS CurrentID (CurrentUser INT, ID INT)");
 	tx.executeSql("INSERT INTO CurrentID VALUES(0, 0)");
-	//tx.executeSql("INSERT INTO Deposit VALUES(2, '2014-10-30', 80.0)");
-	//tx.executeSql("INSERT INTO Withdraw VALUES(2, '2014-10-31', -30.0)");
-	//tx.executeSql("INSERT INTO BalanceHistory VALUES(2, '2014-11-2', 50.0)");
-	//tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-2', 30.0)");
   }
   
   function errorDB(error) {
@@ -60,6 +56,7 @@
 		function queryDatabase($string, $col, $callBack){
 			var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
 			db.transaction(queryDB, errorDB);
+			var data = [];
 			
 			function queryDB(tx){
 				tx.executeSql($string, [], querySelectSuccess, errorQ);
@@ -70,18 +67,19 @@
 					for (var i = 0; i < results.rows.length; i++){
 					
 						if ($col == "Username"){
-							$callBack.array.push(results.rows.item(i).Username);
+							data.push(results.rows.item(i).Username);
 						}
 						
 						if ($col == "Pin"){
-							$callBack.array.push(results.rows.item(i).Pin);
+							data.push(results.rows.item(i).Pin);
 						}
 						
 						if ($col == "ID"){
-							$callBack.array.push(results.rows.item(i).ID);
+							data.push(results.rows.item(i).ID);
 						}
 					}
 				}
+				$callBack(data);
 			}
 
 			function errorQ(error){
@@ -112,36 +110,39 @@
 				alert("Please Enter a Pin.");
 			}
 			else {
-				var uname = { array: [] };
-				var userID = { array: [] };
-				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", uname);
-				QueryService.queryDatabase("SELECT ID FROM Users WHERE Username = '" + $scope.username + "'", "ID", userID);
-				setTimeout(function(){
-					if(uname.array.length == 0){
-						alert("That Username does not exist.");
-					}
-					}, 100);
-				
-				var pass = { array: [] };
-				QueryService.queryDatabase("SELECT Pin FROM Users WHERE Username = '" + $scope.username + "'", "Pin", pass);
-				setTimeout(function(){
-					if(uname.array.length == 0){
-					}
-					else if($scope.pin != pass.array[0]){
-						alert("That Pin is incorrect.");
-					}
-					else {
-						QueryService.queryDatabase("UPDATE CurrentID SET ID = " + userID.array[0] + " WHERE CurrentUser = 0;", "", "");
 
-						setTimeout(function(){	
-							pushApp();
-						}, 200);
-					}
-					}, 100);
-			}
-			
-			function pushApp(){			
-				myNavigator.pushPage('app.html', { animation : 'fade' } );
+				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", function(uname){
+					getUserID(uname);
+				});
+
+				function getUserID(uname){
+					QueryService.queryDatabase("SELECT ID FROM Users WHERE Username = '" + $scope.username + "'", "ID", function(userID){
+
+						if(uname.length == 0){
+							alert("That Username does not exist.");
+						}
+						else {
+							getPin(uname, userID);
+						}
+					});
+				}
+
+				function getPin(uname, userID) {
+					QueryService.queryDatabase("SELECT Pin FROM Users WHERE Username = '" + $scope.username + "'", "Pin", function(pass){
+						if($scope.pin != pass[0]){
+							alert("That Pin is incorrect.");
+						}
+						else {
+							pushApp(uname, userID, pass);
+						}
+					});
+				}
+				
+				function pushApp(uname, userID, pass){
+					QueryService.queryDatabase("UPDATE CurrentID SET ID = " + userID[0] + " WHERE CurrentUser = 0;", "", function(update){
+						myNavigator.pushPage('app.html', { animation : 'fade' } );
+					});
+				}
 			}
 		}		
 	});
@@ -173,30 +174,28 @@
 				alert("Pin Does Not Match.");
 			}
 			else {
-				var uname = { array: [] };
-				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", uname);
-				$timeout(function(){
-					if(uname.array.length != 0){
+				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", function(uname){
+					if(uname.length != 0){
 						alert("Sorry.  That username is already taken.");
 					}
 					else {
 						pushBalance();
-					}
-					}, 100);	
+					}				
+				});	
 			}
 			
 			function pushBalance(){		
-				var maxID = { array: [] };
 				var newID;
-				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", maxID);
-				$timeout(function(){
-					newID = maxID.array[0] + 1;
-					}, 100);	
-				$timeout(function(){
-					QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "')", "", "");
-
+				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", function(maxID){
+					newID = maxID[0] + 1;
+					insertUser(newID);	
+				});			
+			}
+			
+			function insertUser(newID){
+				QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "')", "", function(insert){
 					myNavigator.pushPage('balance.html', { animation : 'slide' } );
-					}, 100);				
+				});
 			}
 		}
 
@@ -208,101 +207,103 @@
 				alert("Please Enter an Threshold.");
 			}
 			else {
-				var maxID = { array: [] };
-				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", maxID);			
+				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", function(maxID){
+					updateThreshold(maxID);
+				});
 
-				$timeout(function(){				
-					QueryService.queryDatabase("UPDATE Users SET Threshold = " + $scope.threshold + " WHERE ID = " + maxID.array[0], "", "");
-					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + maxID.array[0] + ", datetime('now'), " + $scope.balance + ")", "", "");
-					QueryService.queryDatabase("UPDATE CurrentID SET ID = " + maxID.array[0] + " WHERE CurrentUser = 0", "", "");
-					
-					pushApp();
-					}, 100);	
-			}
-
-			function pushApp(){			
-				$timeout(function(){
-					myNavigator.pushPage('app.html', { animation : 'fade' } )
-					}, 100);
+				function updateThreshold(maxID){
+					QueryService.queryDatabase("UPDATE Users SET Threshold = " + $scope.threshold + " WHERE ID = " + maxID[0], "", function(update){
+						insertBalance(maxID);
+					});
+				}
+				
+				function insertBalance(maxID){
+					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + maxID[0] + ", datetime('now'), " + $scope.balance + ")", "", function(insert){
+						updateCurrentID(maxID);
+					});
+				}
+				
+				function updateCurrentID(maxID){
+					QueryService.queryDatabase("UPDATE CurrentID SET ID = " + maxID[0] + " WHERE CurrentUser = 0", "", function(update){
+						myNavigator.pushPage('app.html', { animation : 'fade' } );
+					});
+				}
 			}
 		}	
 	});
 
-	module.controller('PopulateHomeData', function($scope, QueryService, $timeout){
-	
-			var IDcurrent = { array: [] };
-			var amount = { array: [] };
-			var time = { array: [] };
-			var bal = { array: [] };
-			
-			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", IDcurrent);
-			
-			$timeout(function(){	
+	module.controller('PopulateHomeData', function($scope, QueryService){
 
-				QueryService.queryDatabase("SELECT Timestamp, Balance AS ID FROM Deposit WHERE ID = " + IDcurrent.array[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", amount);
-				QueryService.queryDatabase("SELECT Timestamp AS ID, Balance FROM Deposit WHERE ID = " + IDcurrent.array[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", time);
+		$scope.init = function(){
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				getTransactionBalance(IDcurrent);
+			});
 			
-				$timeout(function(){
-
+			function getTransactionBalance(IDcurrent){
+				QueryService.queryDatabase("SELECT Timestamp, Balance AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", function(amount){
+					getTransactionTime(IDcurrent, amount);
+				});
+			}
+			
+			function getTransactionTime(IDcurrent, amount){
+				QueryService.queryDatabase("SELECT Timestamp AS ID, Balance FROM Deposit WHERE ID = " + IDcurrent[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", function(time){
+					getBalance(IDcurrent, amount, time);
+				});
+			}
+			
+			function getBalance(IDcurrent, amount, time){
+				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", function(bal){
+						
 					$scope.rows = [];
-					for(var i = 0; i < amount.array.length; i++){
+					for(var i = 0; i < amount.length; i++){
 						$scope.rows.push({
-							'Date': String(time.array[i]),
-							'Amount': String(amount.array[i])});
-					}					
-					}, 100);
-				}, 100);
-			
-			$timeout(function(){
-				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", bal);
-				
-				$timeout(function(){
-					$scope.balance = bal.array[0];
-					}, 100);
-				}, 100);
-				
-		$timeout(function(){		
-		$('#container').highcharts({
-			title: {
-				text: 'Balance History',
-				x: -20 //center
-			},
-			xAxis: {
-				categories: ['9/15', '9/22', '9/29', '10/6', '10/13', '10/20',
-					'10/27', '11/3']
-			},
-			yAxis: {
-				title: {
-					text: 'Balance ($)'
-				},
-				plotLines: [{
-					value: 0,
-					width: 1,
-					color: '#808080'
-				}]
-			},
-			tooltip: {
-				valuePrefix: '$'
-			},
-			series: [{
-				name: 'David',
-				data: [27.0, 26.9, 29.5, 34.5, 38.2, 41.5, 45.2, 50.0]
-			}, {
-				name: 'Threshold',
-				data: [30, 30, 30, 30, 30, 30, 30, 30]
-			}]
-		});
-		}, 300);			
+							'Date': String(time[i]),
+							'Amount': String(amount[i])});
+					}
+						
+					$scope.balance = bal[0];
+					$scope.$apply();
+						
+					$('#container').highcharts({
+					title: {
+						text: 'Balance History',
+						x: -20 //center
+					},
+					xAxis: {
+						categories: ['9/15', '9/22', '9/29', '10/6', '10/13', '10/20',
+							'10/27', '11/3']
+					},
+					yAxis: {
+						title: {
+						text: 'Balance ($)'
+					},
+					plotLines: [{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}]
+					},
+					tooltip: {
+						valuePrefix: '$'
+					},
+					series: [{
+						name: 'David',
+						data: [27.0, 26.9, 29.5, 34.5, 38.2, 41.5, 45.2, 50.0]
+					}, {
+						name: 'Threshold',
+						data: [30, 30, 30, 30, 30, 30, 30, 30]
+					}]
+					});
+				});
+			}
+		}
 	});
 	
 	module.controller('DepWitCtrl', function($scope, QueryService, $timeout){
 	
-		var IDcurrent = { array: [] };
-		var currentBalance = { array: [] };
 		var depAmount = 0.0;
 		var witAmount = 0.0;
 		$scope.inputAmount = [];
-		QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", IDcurrent);
 		
 		$scope.deposit20 = function(){		
 			$scope.inputAmount = [];
@@ -340,20 +341,31 @@
 		
 		$scope.depositYes = function(){
 			deposit(depAmount);
-			$timeout(function(){
-				myNavigator.pushPage('app.html', { animation : 'fade' } );
-				}, 100);
 		}
 		
 		function deposit($amount){
-			$timeout(function(){
-				QueryService.queryDatabase("INSERT INTO Deposit VALUES(" + IDcurrent.array[0] + ", datetime('now')," + $amount +")", "", "");
-				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", currentBalance);
-				$timeout(function(){
-					var newBal = currentBalance.array[0] + $amount;
-					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent.array[0] + ", datetime('now'), " + newBal + ")", "", "");
-					}, 100);
-				}, 50);
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				insertAmount(IDcurrent);
+			});		
+			
+			function insertAmount(IDcurrent){
+				QueryService.queryDatabase("INSERT INTO Deposit VALUES(" + IDcurrent[0] + ", datetime('now')," + $amount +")", "", function(insert){
+					updateBalance(IDcurrent);
+				});
+			}
+			
+			function updateBalance(IDcurrent){
+				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", function(currentBalance){
+					var newBal = currentBalance[0] + $amount;
+					insertBalance(IDcurrent, newBal);
+				});
+			}
+			
+			function insertBalance(IDcurrent, newBal){
+				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now'), " + newBal + ")", "", function(insert){
+					myNavigator.pushPage('app.html', { animation : 'fade' } );
+				});
+			}
 		}
 		
 		$scope.withdraw20 = function(){		
@@ -389,25 +401,33 @@
 		
 		$scope.withdrawYes = function(){
 			withdraw(witAmount);
-			$timeout(function(){
-				myNavigator.pushPage('app.html', { animation : 'fade' } );
-				}, 100);
 		}
 		
 		function withdraw($amount){
-			$timeout(function(){
-				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent.array[0] + ", datetime('now')," + $amount +")", "", "");
-				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent.array[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", currentBalance);
-				$timeout(function(){
-					var newBal = currentBalance.array[0] + $amount;
-					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent.array[0] + ", datetime('now'), " + newBal + ")", "", "");
-					}, 100);
-				}, 50);
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				insertAmount(IDcurrent);
+			});		
+			
+			function insertAmount(IDcurrent){
+				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now')," + $amount +")", "", function(insert){
+					updateBalance(IDcurrent);
+				});
+			}
+			
+			function updateBalance(IDcurrent){
+				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", function(currentBalance){
+					var newBal = currentBalance[0] + $amount;
+					insertBalance(IDcurrent, newBal);
+				});
+			}
+			
+			function insertBalance(IDcurrent, newBal){
+				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now'), " + newBal + ")", "", function(insert){
+					myNavigator.pushPage('app.html', { animation : 'fade' } );
+				});
+			}		
 		}
-		
-		
 	});
-
   </script>
 
 
@@ -651,7 +671,7 @@
 
 			<ons-row style="margin-top: 10px;">
 				<ons-col align="center">
-					<div ng-controller="PopulateHomeData">
+					<div ng-controller="PopulateHomeData" data-ng-init="init()">
 						<div>
 						<table style="border: 1px solid black">
 						<thead style="background-color: LightBlue">
