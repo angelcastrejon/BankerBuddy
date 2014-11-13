@@ -589,16 +589,28 @@
 	</ons-template>
 
 	<ons-template id="balance.html">
-		<ons-page>
+		<ons-page style="background-color:#1AAF5D;">
 			<div style="margin-top:6%; margin-left:auto; margin-right:auto; text-align: center; height:320px; width:90%" ng-controller="createCtrl">
-				<img src="img\icon1.png" style="width: 50%; margin-top:10%">
+				<img src="img\icon.png" style="width: 50%; margin-top:10%">
 				<div style="margin-top:10%">
 					<ons-icon icon="ion-social-usd-outline"></ons-icon>
-					<input type="tel" class="text-input" placeholder="Balance" ng-model="balance">
+					<input style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;"
+  					  type="tel" class="text-input" placeholder="Balance" ng-model="balance">
 				</div> 
 				<div style="margin-top:1%">
 					<ons-icon icon="ion-stats-bars"></ons-icon>
-					<input type="tel" class="text-input" placeholder="Threshold" ng-model="threshold">
+					<input style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:50px;
+  					  font-size: 100%;"
+  					  type="tel" class="text-input" placeholder="Threshold" ng-model="threshold">
 				</div> 
 				<br>
 				<ons-button modifier="outline" ng-click="insertAccount()">
@@ -611,12 +623,12 @@
 	<ons-template id="app.html">
 		<ons-sliding-menu
 			menu-page="menu.html" main-page="page0.html" side="left"
-			var="menu" type="reveal" max-slide-distance="260px" swipable="true">
+			var="menu" type="reveal" max-slide-distance="260px" swipable="true" ng-device-backbutton="menu.toggle()">
 		</ons-sliding-menu>
     </ons-template>
 	
 	<ons-template id="menu.html">
-		<ons-page modifier="menu-page">
+		<ons-page ng-device-backbutton="menu.toggle()" modifier="menu-page">
 			<ons-toolbar modifier="transparent"></ons-toolbar>
 
 			<ons-list class="menu-list">
@@ -700,7 +712,7 @@
 
 
 	<ons-template id="page1.html">
-		<ons-page id="page1">
+		<ons-page id="page1" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -756,7 +768,7 @@
 	</ons-template>
 
 	<ons-template id="page2.html">
-		<ons-page id="page2">
+		<ons-page id="page2" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -813,7 +825,7 @@
 	</ons-template>
 	 
 	<ons-template id="page3.html">
-		<ons-page id="page3">
+		<ons-page id="page3" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -835,7 +847,7 @@
 	 </ons-template>
 
 	<ons-template id="page4.html">
-		<ons-page id="page4">
+		<ons-page id="page4" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -857,7 +869,7 @@
 	</ons-template>
 
 	<ons-template id="page5.html">
-		<ons-page id="page5">
+		<ons-page id="page5" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -922,7 +934,7 @@
 	</ons-template>
 
 	<ons-template id="page6.html">
-		<ons-page id="page6">
+		<ons-page id="page6" ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
