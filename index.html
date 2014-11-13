@@ -9,6 +9,7 @@
   // Wait for Cordova to load
   //
   document.addEventListener("deviceready", onDeviceReady, false);
+ 
 
   // Cordova is ready
   //
@@ -17,6 +18,7 @@
 	var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
 	db.transaction(CreateDatabase, errorDB, successDB);
   }
+
   
   function CreateDatabase(tx) {
 	tx.executeSql("DROP TABLE IF EXISTS CurrentID");
@@ -659,7 +661,7 @@
 	</ons-template>
 
 	<ons-template id="page0.html">
-		<ons-page>
+		<ons-page ng-device-backbutton="menu.toggle()">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
