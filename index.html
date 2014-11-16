@@ -623,12 +623,12 @@
 	<ons-template id="app.html">
 		<ons-sliding-menu
 			menu-page="menu.html" main-page="page0.html" side="left"
-			var="menu" type="reveal" max-slide-distance="260px" swipable="true" ng-device-backbutton="menu.toggle()">
+			var="menu" type="reveal" max-slide-distance="260px" swipable="true" >
 		</ons-sliding-menu>
     </ons-template>
 	
 	<ons-template id="menu.html">
-		<ons-page ng-device-backbutton="menu.toggle()" modifier="menu-page">
+		<ons-page modifier="menu-page">
 			<ons-toolbar modifier="transparent"></ons-toolbar>
 
 			<ons-list class="menu-list">
@@ -673,7 +673,7 @@
 	</ons-template>
 
 	<ons-template id="page0.html">
-		<ons-page ng-device-backbutton="menu.toggle()">
+		<ons-page ng-device-backbutton="menu.toggle()" >
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -688,7 +688,7 @@
 					<div ng-controller="PopulateHomeData" data-ng-init="init()">
 						<div>
 						<table style="border: 1px solid black">
-						<thead style="background-color: LightBlue">
+						<thead style="background-color: #1AAF5D">
 							<tr>
 								<th width="200">Date</th>
 								<th width="200">Amount</th>
@@ -712,7 +712,7 @@
 
 
 	<ons-template id="page1.html">
-		<ons-page id="page1" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page1" ng-device-backbutton="menu.toggle()" style="background:#1AAF5D">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -768,7 +768,7 @@
 	</ons-template>
 
 	<ons-template id="page2.html">
-		<ons-page id="page2" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page2" ng-device-backbutton="menu.toggle()" style="background:#1AAF5D">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
