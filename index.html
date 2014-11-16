@@ -688,7 +688,7 @@
 					<div ng-controller="PopulateHomeData" data-ng-init="init()">
 						<div>
 						<table style="border: 1px solid black">
-						<thead style="background-color: #1AAF5D">
+						<thead style="background-color: #D3FECD">
 							<tr>
 								<th width="200">Date</th>
 								<th width="200">Amount</th>
@@ -712,7 +712,7 @@
 
 
 	<ons-template id="page1.html">
-		<ons-page id="page1" ng-device-backbutton="menu.toggle()" style="background:#1AAF5D">
+		<ons-page id="page1" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -735,28 +735,34 @@
 				
 				<ons-row style="margin-top: 60px;">
 					<ons-col align="center">
-						<ons-button style="margin-right: 10px; width: 80px; height: 80px;" modifier="outline" ng-click="deposit20()">
+						<ons-button style="margin-right: 10px; width: 80px; height: 80px;" modifier="" ng-click="deposit20()">
 						<p style="font-size: 22px"><b>$20</b></p>
 						</ons-button>
-						<ons-button style="margin-right: 10px; width: 80px; height: 80px;" modifier="outline" ng-click="deposit50()">
+						<ons-button style="margin-right: 10px; width: 80px; height: 80px;" modifier="" ng-click="deposit50()">
 						<p style="font-size: 22px"><b>$50</b></p>
 						</ons-button>
-						<ons-button style="width: 80px; height: 80px;" modifier="outline" ng-click="deposit100()">
+						<ons-button style="width: 80px; height: 80px;" modifier="normal" ng-click="deposit100()">
 						<p style="font-size: 22px"><b>$100</b></p>
 						</ons-button>
 					</ons-col>
 				</ons-row>
 				<ons-row style="margin-top: 50px;">
 					<ons-col align="center">
-						<ons-button style="width: 60%;" modifier="outline" ng-click="otherAmount()">
+						<ons-button style="width: 60%;" modifier="" ng-click="otherAmount()">
 						<p style="font-size: 20px"><b>Other Amount</b></p>
 						</ons-button>
 						
 						<div ng-repeat="input in inputAmount">
 						<p style="margin-top: 50px; font-size: 18px"><b>Please enter the amount to deposit.</b></p>
-							<div style = "margin-top: 15px"><input type="tel" ng-model="input.value"></div>
+							<div style = "">
+  					  		<input type="tel" ng-model="input.value" style="padding: 10px;
+  					  border: solid 3px #fff;
+  					  box-shadow: inset 3px 3px 6px 0 #707070;
+  					  transition: box-shadow 0.3s;
+  					  height:30px;
+  					  font-size: 100%;"></div>
 							<div style = "margin-top: 5px">
-								<ons-button modifier="outline" ng-click="otherDeposit()">
+								<ons-button modifier="" ng-click="otherDeposit()">
 								<p style="font-size: 18px"><b>Deposit</b></p>
 								</ons-button>
 							</div>
@@ -768,7 +774,7 @@
 	</ons-template>
 
 	<ons-template id="page2.html">
-		<ons-page id="page2" ng-device-backbutton="menu.toggle()" style="background:#1AAF5D">
+		<ons-page id="page2" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -825,7 +831,7 @@
 	</ons-template>
 	 
 	<ons-template id="page3.html">
-		<ons-page id="page3" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page3" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -847,7 +853,7 @@
 	 </ons-template>
 
 	<ons-template id="page4.html">
-		<ons-page id="page4" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page4" ng-device-backbutton="menu.toggle()" >
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -869,7 +875,7 @@
 	</ons-template>
 
 	<ons-template id="page5.html">
-		<ons-page id="page5" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page5" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -934,7 +940,7 @@
 	</ons-template>
 
 	<ons-template id="page6.html">
-		<ons-page id="page6" ng-device-backbutton="menu.toggle()">
+		<ons-page id="page6" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
