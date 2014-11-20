@@ -22,7 +22,7 @@
   
   function CreateDatabase(tx) {
 	tx.executeSql("DROP TABLE IF EXISTS CurrentID");
-	tx.executeSql("CREATE TABLE IF NOT EXISTS Users (ID INT PRIMARY KEY, Username TEXT, Pin INT, Threshold REAL, Email TEXT)");
+	tx.executeSql("CREATE TABLE IF NOT EXISTS Users (ID INT PRIMARY KEY, Username TEXT, Pin INT, Threshold REAL, Email TEXT, EmailNotification INT, PushNotification INT)");
 	tx.executeSql("CREATE TABLE IF NOT EXISTS BalanceHistory (ID INT, Timestamp TEXT, Balance REAL)");
 	tx.executeSql("CREATE TABLE IF NOT EXISTS Deposit (ID INT, Timestamp TEXT, Balance REAL)");
 	tx.executeSql("CREATE TABLE IF NOT EXISTS Withdraw (ID INT, Timestamp TEXT, Balance REAL)");
@@ -195,7 +195,7 @@
 			}
 			
 			function insertUser(newID){
-				QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "')", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "', 1, 1)", "", function(insert){
 					myNavigator.pushPage('balance.html', { animation : 'slide' } );
 				});
 			}
@@ -428,6 +428,138 @@
 					myNavigator.pushPage('app.html', { animation : 'fade' } );
 				});
 			}		
+		}
+	});
+	
+	module.controller('SettingsCtrl', function($scope, QueryService, $timeout){
+		$scope.init = function(){
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				obtainEmail(IDcurrent);
+			});
+			
+			function obtainEmail(IDcurrent){
+				QueryService.queryDatabase("SELECT Email AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(email){
+					$scope.email = email[0];
+					obtainUsername(IDcurrent);
+				});
+			}
+			
+			function obtainUsername(IDcurrent){
+				QueryService.queryDatabase("SELECT Username AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(user){
+					$scope.username = user[0];
+					obtainThreshold(IDcurrent);
+				});
+			}
+			
+			function obtainThreshold(IDcurrent){
+				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(thresh){
+					$scope.threshold = thresh[0];
+					obtainEmailNote(IDcurrent);
+				});
+			}
+			
+			function obtainEmailNote(IDcurrent){
+				QueryService.queryDatabase("SELECT EmailNotification AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(emailNotification){
+
+					if (emailNotification[0] == 1){
+						$scope.emailNote.setChecked(true);
+						obtainPushNote(IDcurrent);
+					}
+					else {
+						$scope.emailNote.setChecked(false);
+						obtainPushNote(IDcurrent);
+					}
+				});
+			}
+			
+			function obtainPushNote(IDcurrent){
+				QueryService.queryDatabase("SELECT PushNotification AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(pushNotification){
+					
+					if (pushNotification[0] == 1){
+						$scope.pushNote.setChecked(true);
+						$scope.$apply();
+					}
+					else {
+						$scope.pushNote.setChecked(false);
+						$scope.$apply();
+					}
+					
+				});
+			}
+			
+		};
+		
+		$scope.save = function(){
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				updateUser(IDcurrent);
+			});
+			
+			function updateUser(IDcurrent){
+				QueryService.queryDatabase("UPDATE Users SET Username = '" + $scope.username + "', Email = '" + $scope.email + "', Threshold = " + $scope.threshold + " WHERE ID = " + IDcurrent[0], "", function(update){
+					updateEmailNote(IDcurrent);
+				});
+			}
+			
+			function updateEmailNote(IDcurrent){
+				
+				if ($scope.emailNote.isChecked()){
+					QueryService.queryDatabase("UPDATE Users SET EmailNotification = 1 WHERE ID = " + IDcurrent[0], "", function(update){
+						updatePushNote(IDcurrent);
+					});
+				}
+				else {
+					QueryService.queryDatabase("UPDATE Users SET EmailNotification = 0 WHERE ID = " + IDcurrent[0], "", function(update){
+						updatePushNote(IDcurrent);
+					});
+				}
+			}
+
+			function updatePushNote(IDcurrent){
+				
+				if ($scope.pushNote.isChecked()){
+					QueryService.queryDatabase("UPDATE Users SET PushNotification = 1 WHERE ID = " + IDcurrent[0], "", function(update){
+						checkPin(IDcurrent);
+					});
+				}
+				else {
+					QueryService.queryDatabase("UPDATE Users SET PushNotification = 0 WHERE ID = " + IDcurrent[0], "", function(update){
+						checkPin(IDcurrent);
+					});
+				}
+			}
+
+			function checkPin(IDcurrent){
+				if (!$scope.oldpin){
+					myNavigator.pushPage('app.html', { animation : 'fade' } );
+				}
+				else {
+					QueryService.queryDatabase("SELECT Pin FROM Users WHERE ID = " + IDcurrent[0], "Pin", function(pass){
+						if($scope.oldpin != pass[0]){
+							alert("Your current pin was not entered correctly.");
+						}
+						else if(!$scope.newpin){
+							alert("Your new pin must contain at least one digit.");
+						}
+						else {
+							if ($scope.newpin != $scope.confirmnewpin){
+								alert("Your pin does not match");
+							}
+							else {
+								updatePin(IDcurrent);
+							}
+						}
+					});
+				}				
+			}
+			
+			function updatePin(IDcurrent){
+				QueryService.queryDatabase("UPDATE Users SET Pin = " + $scope.newpin + " WHERE ID = " + IDcurrent[0], "", function(update){
+					$scope.oldpin = "";
+					$scope.newpin = "";
+					$scope.confirmnewpin = "";
+					myNavigator.pushPage('app.html', { animation : 'fade' } );
+				});
+			}
 		}
 	});
   </script>
@@ -863,14 +995,62 @@
 				<div class="center">Settings</div>
 			</ons-toolbar>
 
-			<ons-row style="margin-top: 100px;">
-				<ons-col align="center">
-					<ons-button modifier="light" ng-click="menu.toggleMenu()">
-					Toggle Menu
-					</ons-button>
-					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
-				</ons-col>
-			</ons-row>
+			<div ng-controller="SettingsCtrl"> 
+			<ons-list>
+				<div data-ng-init="init()">
+				<ons-list-header>Username</ons-list-header>
+			
+				<ons-list-item>
+					<input type="text" ng-model="username" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+
+				<ons-list-header>Email</ons-list-header>
+				
+				<ons-list-item>
+					<input type="text" ng-model="email" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+				
+				<ons-list-header>Threshold</ons-list-header>
+				
+				<ons-list-item>
+					<input type="text" ng-model="threshold" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+
+				<ons-list-header>Pin</ons-list-header>
+
+				<ons-list-item>
+					<input type="tel" ng-model="oldpin" placeholder="Old Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+
+				<ons-list-item>
+					<input type="tel" ng-model="newpin" placeholder="New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+				
+				<ons-list-item>
+					<input type="tel" ng-model="confirmnewpin" placeholder="Confirm New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+				</ons-list-item>
+				
+				<ons-list-header>Notifications</ons-list-header>
+
+				<ons-list-item>
+					<span style="color: #666">Email Notifications</span>
+					<ons-switch modifier="list-item" var="emailNote"></ons-switch>
+				</ons-list-item>
+
+				<ons-list-item>
+					<span style="color: #666">Push Notifications</span>
+					<ons-switch modifier="list-item" var="pushNote"></ons-switch>
+				</ons-list-item>
+				
+				</div>
+			</ons-list>
+
+			<div class="content-padded">
+				<ons-button modifier="large" ng-click="save()">
+				Save
+				</ons-button>
+			</div>
+			</div>
 		</ons-page>
 	</ons-template>
 
