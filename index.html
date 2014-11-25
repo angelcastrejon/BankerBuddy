@@ -86,6 +86,7 @@
 
 			function errorQ(error){
 				alert("Error processing SQL : " + error);
+				alert($string);
 			}
 	
 			function errorDB(error){
@@ -237,6 +238,7 @@
 	module.controller('PopulateHomeData', function($scope, QueryService){
 
 		$scope.init = function(){
+			$scope.balColor = {"color":"black"};
 			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
 				getTransactionBalance(IDcurrent);
 			});
@@ -248,32 +250,59 @@
 			}
 			
 			function getTransactionTime(IDcurrent, amount){
-				QueryService.queryDatabase("SELECT Timestamp AS ID, Balance FROM Deposit WHERE ID = " + IDcurrent[0] + " UNION SELECT Timestamp, Balance FROM Withdraw WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", function(time){
+				QueryService.queryDatabase("SELECT Timestamp AS ID, Balance FROM Deposit WHERE ID = " + IDcurrent[0] + " UNION SELECT Timestamp AS ID, Balance FROM Withdraw WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 5", "ID", function(time){
 					getBalance(IDcurrent, amount, time);
 				});
 			}
 			
 			function getBalance(IDcurrent, amount, time){
-				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", function(bal){
+				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 8", "ID", function(bal){
 						
 					$scope.rows = [];
 					for(var i = 0; i < amount.length; i++){
+						date = time[i].substring(5,7) + "/" + time[i].substring(8, 10) + "/" + time[i].substring(0,4);
 						$scope.rows.push({
-							'Date': String(time[i]),
-							'Amount': String(amount[i])});
+							'Date':  date,
+							'Amount': String(parseFloat(Math.round(amount[i] * 100) / 100).toFixed(2))});
 					}
-						
-					$scope.balance = bal[0];
-					$scope.$apply();
-						
+				
+					$scope.balance = parseFloat(Math.round(bal[0] * 100) / 100).toFixed(2);
+					getThreshold(IDcurrent, bal);
+				});				
+			}
+			
+			function getThreshold(IDcurrent, bal){
+			
+				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
+					if (bal[0] < threshold[0]){
+						$scope.balColor = {"color":"red"};
+					}
+					getUser(IDcurrent, bal, threshold);
+				});	
+			}
+			
+			function getUser(IDcurrent, bal, threshold){
+				QueryService.queryDatabase("SELECT Username FROM Users WHERE ID = " + IDcurrent[0], "Username", function(user){
+					populateGraph(IDcurrent, bal, threshold, user);
+				});	
+			}
+			
+			function populateGraph(IDcurrent, bal, threshold, user){	
+				bal.reverse();
+				for(var i = 1; i < bal.length; i++){
+					threshold.push(threshold[0]);
+				}
+				
+				QueryService.queryDatabase("SELECT strftime('%m/%d', Timestamp) AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp LIMIT 8", "ID", function(time){
+				
+					
 					$('#container').highcharts({
 					title: {
 						text: 'Balance History',
 						x: -20 //center
 					},
 					xAxis: {
-						categories: ['9/15', '9/22', '9/29', '10/6', '10/13', '10/20',
-							'10/27', '11/3']
+						categories: time
 					},
 					yAxis: {
 						title: {
@@ -289,15 +318,19 @@
 						valuePrefix: '$'
 					},
 					series: [{
-						name: 'David',
-						data: [27.0, 26.9, 29.5, 34.5, 38.2, 41.5, 45.2, 50.0]
+						name: user[0],
+						data: bal
 					}, {
 						name: 'Threshold',
-						data: [30, 30, 30, 30, 30, 30, 30, 30]
-					}]
+						data: threshold
+					}],
+					exporting: {
+						enabled: false
+					}
 					});
-				});
-			}
+				});	
+				$scope.$apply();
+			}	
 		}
 	});
 	
@@ -521,7 +554,7 @@
 						checkPin(IDcurrent);
 					});
 				}
-				else {
+				else {0
 					QueryService.queryDatabase("UPDATE Users SET PushNotification = 0 WHERE ID = " + IDcurrent[0], "", function(update){
 						checkPin(IDcurrent);
 					});
@@ -561,6 +594,10 @@
 				});
 			}
 		}
+	});
+	
+	module.controller('SendFeedback', function($scope, QueryService){
+
 	});
   </script>
 
@@ -834,7 +871,7 @@
 						</tbody>
 						</table>   
 						</div>
-						<div style="font-size: 36px"><p><b>Balance:  ${{balance}}</b></p></div>
+						<div style="font-size: 36px; margin: auto;"><p><b>Balance:  <span ng-style="balColor">${{balance}}</span></b></p></div>
 						<div id="container" style="min-width: 100%; height: 225px"></div>
 					</div>
 				</ons-col>
@@ -1013,7 +1050,7 @@
 				<ons-list-header>Threshold</ons-list-header>
 				
 				<ons-list-item>
-					<input type="text" ng-model="threshold" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+					<input type="tel" ng-model="threshold" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
 				</ons-list-item>
 
 				<ons-list-header>Pin</ons-list-header>
@@ -1120,7 +1157,7 @@
 	</ons-template>
 
 	<ons-template id="page6.html">
-		<ons-page id="page6" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
+		<ons-page id="page6" ng-device-backbutton="menu.toggle()" style="background: #1AAF5D">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -1130,14 +1167,50 @@
 				<div class="center">Send Feedback</div>
 			</ons-toolbar>
 
-			<ons-row style="margin-top: 100px;">
-				<ons-col align="center">
-					<ons-button modifier="light" ng-click="menu.toggleMenu()">
-					Toggle Menu
-					</ons-button>
-					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
-				</ons-col>
-			</ons-row>
+			<div style="padding: 8px;" ng-controller="SendFeedback"> 
+			<ons-list style="border: solid 3px #fff; transition: box-shadow 0.3s;">
+				<ons-list-header>Feedback Type</ons-list-header>
+			
+				<ons-list-item>
+					<div style="margin-left: 15px;">
+						<label class="radio-button">
+						<input type="radio" name="type" ng-model="feedbackType">
+						<div class="radio-button__checkmark"></div>
+						Comment
+						</label>
+					</div>
+				</ons-list-item>
+				
+				<ons-list-item>	
+					<div style="margin-left: 15px;">
+						<label class="radio-button">
+						<input type="radio" name="type" ng-model="feedbackType">
+						<div class="radio-button__checkmark"></div>
+						Bug
+						</label>
+					</div>
+				</ons-list-item>
+				
+				<ons-list-header>Description</ons-list-header>
+				
+				<ons-list-item>
+					<section style="padding: 8px">
+						<input type="text" ng-model="subject" class="text-input" placeholder="Subject" style="display: block; width: 100%;">
+					</section>
+					
+					<section style="padding: 0 8px 8px">
+						<textarea class="textarea" ng-model="description" placeholder="Type Description Here" style="width: 100%; height: 250px;"></textarea>
+					</section>
+				</ons-list-item>
+				
+			</ons-list>
+
+			<div class="content-padded">
+				<ons-button modifier="large" ng-click="send()">
+				Send
+				</ons-button>
+			</div>
+			</div>
 		</ons-page>
 	</ons-template
 
