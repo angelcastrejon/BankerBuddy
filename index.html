@@ -40,8 +40,8 @@
   </script>
 
   <link rel="stylesheet" href="lib/onsen/css/onsenui.css">  
-  <link rel="stylesheet" href="lib/onsen/css/onsen-css-components.css">  
-  <link rel="stylesheet" href="styles/app.css"/>
+  <link rel="stylesheet" href="styles/onsen-css-components.css">  
+  <link rel="stylesheet" href="styles/app.css">  
 
   <script src="lib/onsen/js/angular/angular.js"></script>    
   <script src="lib/onsen/js/onsenui.js"></script>    
@@ -49,6 +49,8 @@
   <script src="cordova.js"></script>
   <script src="js/highcharts.js"></script>
   <script src="js/modules/exporting.js"></script>
+  <script src="js/modules/heatmap.js"></script>
+ 
 
   <script>
     var module = angular.module('app', ['onsen']);
@@ -293,9 +295,9 @@
 					threshold.push(threshold[0]);
 				}
 				
-				QueryService.queryDatabase("SELECT strftime('%m/%d', Timestamp) AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp LIMIT 8", "ID", function(time){
+				QueryService.queryDatabase("SELECT strftime('%m/%d', Timestamp) AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 8", "ID", function(time){
 				
-					
+					time.reverse();
 					$('#container').highcharts({
 					title: {
 						text: 'Balance History',
@@ -596,6 +598,478 @@
 		}
 	});
 	
+	module.controller('VisualizationCtrl', function($scope, QueryService){
+		$scope.pieInit = function(){
+			
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				getWithdraws(IDcurrent);
+			});
+			
+			function getWithdraws(IDcurrent){
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '-30 days') AND datetime('now')" , "ID", function(withdrawSum){
+					getDeposits(IDcurrent, withdrawSum);
+				});
+			}
+			
+			function getDeposits(IDcurrent, withdrawSum){
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '-30 days') AND datetime('now')" , "ID", function(depositSum){
+					generatePie(depositSum[0] * 1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])), withdrawSum[0] * -1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])));
+				});
+			}
+
+			function generatePie(depositPer, withdrawPer){
+			
+				// Build the chart
+				$('#pieContainer').highcharts({
+					chart: {
+						plotBackgroundColor: null,
+						plotBorderWidth: null,
+						plotShadow: false
+					},
+					title: {
+						text: 'Deposits vs. Withdraws'
+					},
+					subtitle: {
+						text: 'Previous 30 Days'
+					},
+					tooltip: {
+						enabled: false
+					},
+					plotOptions: {
+						pie: {
+							allowPointSelect: true,
+							cursor: 'pointer',
+							dataLabels: {
+								enabled: true,
+								distance: -75,
+								format: '<b>{point.name}<br>{point.percentage:.1f}%</b>',
+								style: {
+									fontWeight: 'bold',
+									color: 'white',
+									fontSize: '18px',
+									textShadow: '0px 1px 2px black'
+								}
+							}
+						}
+					},
+					series: [{
+						type: 'pie',
+						data: [
+							['Deposits', depositPer],
+							{
+								name: 'Withdraws',
+								y: withdrawPer
+							}
+						]
+					}],
+					exporting: {
+						enabled: false
+					}
+				});
+			}
+		}
+		
+		$scope.barChartInit = function(){
+		
+			var DepWit = new Array(20);
+			var withdraws = [];
+			var deposits = [];
+			var dates = [];
+			for(var i = 0; i < 20; i++){
+				DepWit[i] = new Array(3);
+			}	
+			
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				queryData(IDcurrent, 19);
+			});
+			
+			function queryData(IDcurrent, day){
+				
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '" + (-19 + day) + " days') AND date('now', '" + (-18 + day) + " days')" , "ID", function(withdrawSum){
+				
+					if (withdrawSum[0] == null){
+						DepWit[day][0] = 0;
+					}
+					else{
+						DepWit[day][0] = withdrawSum[0];
+					}
+					
+					QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '" + (-19 + day) + " days') AND date('now', '" + (-18 + day) + " days')" , "ID", function(depositSum){
+				
+						if (depositSum[0] == null){
+							DepWit[day][1] = 0;
+						}
+						else{
+							DepWit[day][1] = depositSum[0];
+						}
+						
+						if (day == 0){
+							getDates(19);
+						}
+						else {
+							queryData(IDcurrent, day - 1);
+						}
+						
+					});	
+				});		
+			}
+			
+			function getDates(day){
+				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-19 + day) + " days')) AS ID" , "ID", function(date){
+				
+					DepWit[day][2] = date;
+					if (day == 0){
+						extractColumns(0);
+					}
+					else {
+						getDates(day - 1);
+					}
+				});				
+			}
+					
+			function extractColumns(row){
+				if(row == DepWit.length){
+					generateBarChart();
+				}
+				else {
+					withdraws.push(DepWit[row][0] * -1.0);
+					deposits.push(DepWit[row][1]);
+					dates.push(DepWit[row][2]);
+					extractColumns(row + 1);
+				}
+			}
+			
+			function generateBarChart(){
+			
+				$('#barChartContainer').highcharts({
+					chart: {
+						type: 'bar'
+					},
+					title: {
+						text: 'Daily Deposits and Witdraws'
+					},
+					subtitle: {
+						text: 'Previous 20 Days'
+					},
+					xAxis: {
+						categories: dates
+					},
+					yAxis: {
+						min: 0,
+						title: {
+							text: 'Daily Transaction Amount'
+						}
+					},
+					legend: {
+						layout: 'vertical',
+						align: 'right',
+						verticalAlign: 'top',
+						itemStyle: {
+							fontSize: '16px'
+						},
+						x: -10,
+						y: 65,
+						floating: true,
+						borderWidth: 1,
+						backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
+						shadow: true
+					},
+					series: [{
+						name: 'Deposits',
+						data: deposits
+					}, {
+						name: 'Withdraws',
+						data: withdraws
+					}],
+					exporting: {
+						enabled: false
+					}
+				});
+			}
+		}
+
+		$scope.heatmapInit = function(){
+
+			var balHistory = new Array(30);
+			var heatmapData = new Array(30);
+			var dates = [];
+			var temp = 29;
+			for(var i = 0; i < 30; i++){
+				balHistory[i] = new Array(2);
+				heatmapData[i] = new Array(3);
+			}
+			for(var i = 0; i < 6; i++){
+				for(var j = 4; j >= 0; j--){
+					heatmapData[temp][0] = j;
+					heatmapData[temp][1] = i;
+					temp--;
+				}
+			}
+		
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				getThreshold(IDcurrent);
+			});
+			
+			function getThreshold(IDcurrent){
+				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
+					getMinBal(IDcurrent, threshold, 29);
+				});	
+			}
+			
+			function getMinBal(IDcurrent, threshold, day){
+				QueryService.queryDatabase("SELECT MAX(Timestamp) AS T, Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " AND Timestamp <= date('now', '" + (-29 + day) + " days')" , "ID", function(prevBal){
+				
+					if (prevBal[0] == null){
+						balHistory[day][0] = null;
+					}
+					else{
+						balHistory[day][0] = prevBal[0];
+					}
+						
+					if (day == 0){
+						getDates(29, threshold);
+					}
+					else {
+						getMinBal(IDcurrent, threshold, day - 1);
+					}
+				});		
+			}
+			
+			function getDates(day, threshold){
+				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-29 + day) + " days')) AS ID" , "ID", function(date){
+				
+					balHistory[day][1] = date;
+					if (day == 0){
+						extractColumns(0, threshold);
+					}
+					else {
+						getDates(day - 1, threshold);
+					}
+				});				
+			}			
+
+			function extractColumns(row, threshold){
+				if(row == balHistory.length){
+					generateHeatmap(threshold);
+				}
+				else {
+					if (balHistory[row][0] == null) {
+						heatmapData[row][2] = null
+					}
+					else {
+						heatmapData[row][2] = (Math.round(balHistory[row][0] * 100) / 100).toFixed(2);
+					}
+					dates.push(balHistory[row][1]);
+					extractColumns(row + 1, threshold);
+				}
+			}			
+			
+			function generateHeatmap(threshold){
+			
+				// Build the chart
+				$('#heatmapContainer').highcharts({
+
+					chart: {
+						type: 'heatmap',
+						marginTop: 40,
+						marginBottom: 40
+					},
+					
+					title: {
+						text: 'Daily Balance vs. Threshold'
+					},
+
+					xAxis: {
+						categories: ['Older', '', '', '', 'Newer']
+					},
+
+					yAxis: {
+						categories: ['', '', '', '', '', ''],
+						title: null
+					},
+
+					colorAxis: {
+						max: threshold,
+						min: 0,
+						maxColor: '#FFFFFF',
+						minColor: Highcharts.getOptions().colors[3],
+					},
+
+					legend: {
+						align: 'right',
+						layout: 'vertical',
+						margin: 0,
+						verticalAlign: 'top',
+						y: 25,
+						symbolHeight: 320,
+					},
+
+					tooltip: {
+						formatter: function () {
+							return '<b>Balance: $</b>' + this.point.value + '<br><b>Date:  <b>' + dates[(this.point.y * -5) + 25 + this.point.x] + '</b>';
+						}
+					},
+
+					series: [{
+						name: 'Daily Balance',
+						borderWidth: 1,
+						data: heatmapData,
+						dataLabels: {
+							enabled: true,
+							color: 'black',
+							style: {
+								textShadow: 'none',
+								HcTextStroke: null
+							}
+						}
+					}],
+					exporting: {
+						enabled: false
+					}
+
+				});
+			}
+		}
+		
+		$scope.areaChartInit = function(){
+
+			var balHistory = new Array(30);
+			var heatmapData = new Array(30);
+			var balance = [];
+			var thresholdArray = [];
+			var dates = [];
+			var temp = 29;
+			for(var i = 0; i < 30; i++){
+				balHistory[i] = new Array(2);
+				heatmapData[i] = new Array(3);
+			}
+			for(var i = 0; i < 6; i++){
+				for(var j = 4; j >= 0; j--){
+					heatmapData[temp][0] = j;
+					heatmapData[temp][1] = i;
+					temp--;
+				}
+			}
+		
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				getThreshold(IDcurrent);
+			});
+			
+			function getThreshold(IDcurrent){
+				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
+					getMinBal(IDcurrent, threshold, 29);
+				});	
+			}
+			
+			function getMinBal(IDcurrent, threshold, day){
+				QueryService.queryDatabase("SELECT MAX(Timestamp) AS T, Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " AND Timestamp <= date('now', '" + (-29 + day) + " days')" , "ID", function(prevBal){
+				
+					if (prevBal[0] == null){
+						balHistory[day][0] = null;
+					}
+					else{
+						balHistory[day][0] = prevBal[0];
+					}
+						
+					if (day == 0){
+						getDates(29, threshold);
+					}
+					else {
+						getMinBal(IDcurrent, threshold, day - 1);
+					}
+				});		
+			}
+			
+			function getDates(day, threshold){
+				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-29 + day) + " days')) AS ID" , "ID", function(date){
+				
+					balHistory[day][1] = date;
+					if (day == 0){
+						extractColumns(0, threshold);
+					}
+					else {
+						getDates(day - 1, threshold);
+					}
+				});				
+			}			
+
+			function extractColumns(row, threshold){
+				if(row == balHistory.length){
+					generateAreaChart(threshold);
+				}
+				else {
+					if (balHistory[row][0] == null) {
+						heatmapData[row][2] = null
+					}
+					else {
+						heatmapData[row][2] = (Math.round(balHistory[row][0] * 100) / 100).toFixed(2);
+					}
+					dates.push(balHistory[row][1]);
+					balance.push(balHistory[row][0]);
+					extractColumns(row + 1, threshold);
+				}
+			}
+		
+			function generateAreaChart(threshold){
+				for(var i = 0; i < balance.length; i++){
+					thresholdArray.push(threshold);
+				}
+				
+				
+				$('#areaChartContainer').highcharts({
+					chart: {
+						type: 'area',
+						inverted: true
+					},
+					title: {
+						text: 'Balance History vs. Threshold'
+					},
+					subtitle: {
+							text: 'Previous 30 Days'
+					},
+
+					legend: {
+						layout: 'vertical',
+						align: 'right',
+						verticalAlign: 'top',
+						x: -10,
+						y: 65,
+						floating: true,
+						borderWidth: 1,
+						backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+					},
+					xAxis: {
+						categories: dates
+					},
+					yAxis: {
+						min: 0,
+						title: {
+							text: 'Daily Transaction Amount'
+						}
+					},
+					plotOptions: {
+						area: {
+							fillOpacity: 0.5
+						}
+					},
+					series: [{
+						name: 'Balance',
+						data: balance
+					}, {
+						name: 'Threshold',
+						data: thresholdArray
+					}],
+					exporting: {
+						enabled: false
+					}
+				});
+			}
+		}
+		
+	});
+	
+	
+	
 	module.controller('SendFeedback', function($scope, QueryService){
 
 	});
@@ -661,52 +1135,75 @@
     .bottom-menu-item:active {
       background-color: rgba(255, 255, 255, 0.1);
     }
+	
+	ons-carousel-item {
+	  display: table;
+	  text-align: center;
+	}
+	.item-label {
+	  display: table-cell;
+	  vertical-align: middle;
+	  color: white;
+	  line-height: 1;
+	  font-size: 48px;
+	  font-weight: bold;
+	}
+	.cover-label {
+	  text-align: center;
+	  position: absolute;
+	  left: 0px;
+	  width: 100%;
+	  bottom: 10px;
+	  color: black;
+	}
   </style>
   
 </head>
 
 <body> 
 
-<ons-navigator title="Navigator" var="myNavigator">
-
-	<ons-page modifier="login" style="background-color:#1AAF5D;">
-		<ons-col align="center">
-			<div ng-controller="loginCtrl">
-				<img src="img\icon.png" style="position:relative; width: 50%; margin-top:10%">
-				<div style="margin-top:5%;">
-					<ons-icon icon="ion-android-social-user"></ons-icon>
-					<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
-  					  border: solid 3px #fff;
-  					  box-shadow: inset 3px 3px 6px 0 #707070;
-  					  transition: box-shadow 0.3s;
-  					  height: 50px;
-  					  font-size: 100%;">
-				</div>
-				<div style="margin-top:2%;">
-					<ons-icon icon="ion-pound"></ons-icon>
-					<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
-  					  border: solid 3px #fff;
-  					  box-shadow: inset 3px 3px 6px 0 #707070;
-  					  transition: box-shadow 0.3s;
-  					  height:50px;
-  					  font-size: 100%;">
-				</div> 
-				<br>
-			
-				<ons-button modifier="cta" ng-click="validateLogin()">
-					Sign In
-				</ons-button>
-			</div>
-		</ons-col>
-		<hr style="width:75%;">
-		<ons-col align="center">
-			<ons-button modifier="" onclick="myNavigator.pushPage('create.html', { animation : 'fade' } )" style="padding-top:10px;">
-			Create Account
-			</ons-button>
-		</ons-col>
-	</ons-page>		
-		
+<ons-navigator title="Navigator" var="myNavigator" page="login.html">
 </ons-navigator>
+
+	<ons-template id="login.html">
+		<ons-page modifier="login" style="background-color:#1AAF5D;">
+			<ons-col align="center">
+				<div ng-controller="loginCtrl">
+					<img src="img\icon.png" style="position:relative; width: 50%; margin-top:10%">
+					<div style="margin-top:5%;">
+						<ons-icon icon="ion-android-social-user"></ons-icon>
+						<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
+						  border: solid 3px #fff;
+						  box-shadow: inset 3px 3px 6px 0 #707070;
+						  transition: box-shadow 0.3s;
+						  height: 50px;
+						  font-size: 100%;">
+					</div>
+					<div style="margin-top:2%;">
+						<ons-icon icon="ion-pound"></ons-icon>
+						<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
+						  border: solid 3px #fff;
+						  box-shadow: inset 3px 3px 6px 0 #707070;
+						  transition: box-shadow 0.3s;
+						  height:50px;
+						  font-size: 100%;">
+					</div> 
+					<br>
+				
+					<ons-button modifier="cta" ng-click="validateLogin()">
+						Sign In
+					</ons-button>
+				</div>
+			</ons-col>
+			<hr style="width:75%;">
+			<ons-col align="center">
+				<ons-button modifier="" onclick="myNavigator.pushPage('create.html', { animation : 'fade' } )" style="padding-top:10px;">
+				Create Account
+				</ons-button>
+			</ons-col>
+		</ons-page>		
+	</ons-template>	
+
 	<ons-template id="create.html">
 		<ons-page style="background-color:#1AAF5D;">
 			<div style="" ng-controller="createCtrl">
@@ -790,14 +1287,16 @@
 	</ons-template>
 	
 	<ons-template id="app.html">
-		<ons-sliding-menu
-			menu-page="menu.html" main-page="page0.html" side="left"
-			var="menu" type="reveal" max-slide-distance="260px" swipable="true" >
-		</ons-sliding-menu>
+		<ons-page>
+			<ons-sliding-menu
+				menu-page="menu.html" main-page="page0.html" side="left"
+				var="menu" type="reveal" max-slide-distance="260px" swipable="true" >
+			</ons-sliding-menu>
+		</ons-page>
     </ons-template>
 	
 	<ons-template id="menu.html">
-		<ons-page modifier="menu-page">
+		<ons-page modifier="menu-page" style="background-color: #333">
 			<ons-toolbar modifier="transparent"></ons-toolbar>
 
 			<ons-list class="menu-list">
@@ -1007,7 +1506,7 @@
 	</ons-template>
 	 
 	<ons-template id="page3.html">
-		<ons-page id="page3" ng-device-backbutton="menu.toggle()" style="background:#D3FECD">
+		<ons-page id="page3" ng-device-backbutton="menu.toggle()" style="background: white">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -1017,14 +1516,29 @@
 				<div class="center">Visualization</div>
 			</ons-toolbar>
 
-			<ons-row style="margin-top: 100px;">
-				<ons-col align="center">
-					<ons-button modifier="light" ng-click="menu.toggleMenu()">
-					Toggle Menu
-					</ons-button>
-					<p style="color: #999; font-size: 13px;">Click "Toggle Menu" to close/open menu,<br> You can also swipe the page left/right.</p>
-				</ons-col>
-			</ons-row>
+			<ons-carousel overscrollable auto-scroll fullscreen var="carousel" direction="vertical">
+				<ons-carousel-item>
+					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="pieInit()">
+						<div id="pieContainer" style="width: 100%; height: 90%"></div>
+					</div>
+				</ons-carousel-item>
+				<ons-carousel-item>
+					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="barChartInit()">
+						<div id="barChartContainer" style="width: 100%; height: 90%"></div>
+					</div>
+				</ons-carousel-item>
+				<ons-carousel-item>
+					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="heatmapInit()">
+						<div id="heatmapContainer" style="width: 100%; height: 90%"></div>
+					</div>
+				</ons-carousel-item>
+				<ons-carousel-item>
+					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="areaChartInit()">
+						<div id="areaChartContainer" style="width: 100%; height: 90%"></div>
+					</div>
+				</ons-carousel-item>
+				<ons-carousel-cover><div class="cover-label">Swipe up or down</div></ons-carousel-cover>
+			</ons-carousel>
 		</ons-page>
 	 </ons-template>
 
