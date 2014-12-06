@@ -56,9 +56,13 @@
     var module = angular.module('app', ['onsen']);
 	
 	module.factory('QueryService', function(){
-	
-		function queryDatabase($string, $col, $callBack){
+		if(typeof db === 'undefined'){
 			var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
+		};	
+		function queryDatabase($string, $col, $callBack){
+		
+
+			
 			db.transaction(queryDB, errorDB);
 			var data = [];
 			
@@ -223,7 +227,7 @@
 				}
 				
 				function insertBalance(maxID){
-					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + maxID[0] + ", datetime('now'), " + $scope.balance + ")", "", function(insert){
+					QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + maxID[0] + ", datetime('now', 'localtime'), " + $scope.balance + ")", "", function(insert){
 						updateCurrentID(maxID);
 					});
 				}
@@ -364,7 +368,9 @@
 		}
 		
 		$scope.otherAmount = function(){
-			$scope.inputAmount.push({'value' : ''});
+			if($scope.inputAmount.length == 0){
+				$scope.inputAmount.push({'value' : ''});
+			}
 		}
 		
 		$scope.otherDeposit = function(){
@@ -386,7 +392,7 @@
 			});		
 			
 			function insertAmount(IDcurrent){
-				QueryService.queryDatabase("INSERT INTO Deposit VALUES(" + IDcurrent[0] + ", datetime('now')," + $amount +")", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO Deposit VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime')," + $amount +")", "", function(insert){
 					updateBalance(IDcurrent);
 				});
 			}
@@ -399,7 +405,7 @@
 			}
 			
 			function insertBalance(IDcurrent, newBal){
-				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now'), " + newBal + ")", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime'), " + newBal + ")", "", function(insert){
 					myNavigator.pushPage('app.html', { animation : 'fade' } );
 				});
 			}
@@ -446,7 +452,7 @@
 			});		
 			
 			function insertAmount(IDcurrent){
-				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now')," + $amount +")", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime')," + $amount +")", "", function(insert){
 					updateBalance(IDcurrent);
 				});
 			}
@@ -459,7 +465,7 @@
 			}
 			
 			function insertBalance(IDcurrent, newBal){
-				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now'), " + newBal + ")", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime'), " + newBal + ")", "", function(insert){
 					myNavigator.pushPage('app.html', { animation : 'fade' } );
 				});
 			}		
@@ -599,26 +605,25 @@
 	});
 	
 	module.controller('VisualizationCtrl', function($scope, QueryService){
-		$scope.pieInit = function(){
+		$scope.visualInit = function(){
 			
 			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
 				getWithdraws(IDcurrent);
 			});
 			
 			function getWithdraws(IDcurrent){
-				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '-30 days') AND datetime('now')" , "ID", function(withdrawSum){
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', 'localtime', '-30 days') AND datetime('now', 'localtime')" , "ID", function(withdrawSum){
 					getDeposits(IDcurrent, withdrawSum);
 				});
 			}
 			
 			function getDeposits(IDcurrent, withdrawSum){
-				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '-30 days') AND datetime('now')" , "ID", function(depositSum){
-					generatePie(depositSum[0] * 1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])), withdrawSum[0] * -1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])));
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', 'localtime', '-30 days') AND datetime('now', 'localtime')" , "ID", function(depositSum){
+					generatePie(depositSum[0] * 1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])), withdrawSum[0] * -1.0 / (depositSum[0] + (-1.0 * withdrawSum[0])), IDcurrent);
 				});
 			}
 
-			function generatePie(depositPer, withdrawPer){
-			
+			function generatePie(depositPer, withdrawPer, IDcurrent){
 				// Build the chart
 				$('#pieContainer').highcharts({
 					chart: {
@@ -665,82 +670,54 @@
 					exporting: {
 						enabled: false
 					}
-				});
+				});				
+				barchartInit(IDcurrent);
 			}
 		}
 		
-		$scope.barChartInit = function(){
+		function barchartInit(IDcurrent){
 		
-			var DepWit = new Array(20);
 			var withdraws = [];
 			var deposits = [];
-			var dates = [];
-			for(var i = 0; i < 20; i++){
-				DepWit[i] = new Array(3);
-			}	
+			var dates = [];	
 			
-			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
-				queryData(IDcurrent, 19);
-			});
+			queryData(IDcurrent, 19);
 			
 			function queryData(IDcurrent, day){
 				
-				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '" + (-19 + day) + " days') AND date('now', '" + (-18 + day) + " days')" , "ID", function(withdrawSum){
+				QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Withdraw WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', 'localtime', '" + (-19 + day) + " days') AND date('now', 'localtime', '" + (-18 + day) + " days')" , "ID", function(withdrawSum){
 				
 					if (withdrawSum[0] == null){
-						DepWit[day][0] = 0;
+						withdraws.push(null);
 					}
 					else{
-						DepWit[day][0] = withdrawSum[0];
+						withdraws.push(-1.0 * withdrawSum[0]);
 					}
 					
-					QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', '" + (-19 + day) + " days') AND date('now', '" + (-18 + day) + " days')" , "ID", function(depositSum){
+					QueryService.queryDatabase("SELECT SUM(Balance) AS ID FROM Deposit WHERE ID = " + IDcurrent[0] + " AND Timestamp BETWEEN date('now', 'localtime', '" + (-19 + day) + " days') AND date('now', 'localtime', '" + (-18 + day) + " days')" , "ID", function(depositSum){
 				
-						if (depositSum[0] == null){
-							DepWit[day][1] = 0;
-						}
-						else{
-							DepWit[day][1] = depositSum[0];
-						}
+						deposits.push(depositSum[0]);
 						
-						if (day == 0){
-							getDates(19);
-						}
-						else {
-							queryData(IDcurrent, day - 1);
-						}
-						
+						QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', 'localtime', '" + (-19 + day) + " days')) AS ID" , "ID", function(date){
+				
+							dates.push(date);
+							if (day == 0){
+								dates.reverse();
+								withdraws.reverse();
+								deposits.reverse();
+								generateBarChart(IDcurrent);
+							}
+							else {
+								queryData(IDcurrent, day - 1);
+							}
+							
+						});	
 					});	
 				});		
 			}
 			
-			function getDates(day){
-				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-19 + day) + " days')) AS ID" , "ID", function(date){
+			function generateBarChart(IDcurrent){
 				
-					DepWit[day][2] = date;
-					if (day == 0){
-						extractColumns(0);
-					}
-					else {
-						getDates(day - 1);
-					}
-				});				
-			}
-					
-			function extractColumns(row){
-				if(row == DepWit.length){
-					generateBarChart();
-				}
-				else {
-					withdraws.push(DepWit[row][0] * -1.0);
-					deposits.push(DepWit[row][1]);
-					dates.push(DepWit[row][2]);
-					extractColumns(row + 1);
-				}
-			}
-			
-			function generateBarChart(){
-			
 				$('#barChartContainer').highcharts({
 					chart: {
 						type: 'bar'
@@ -785,90 +762,69 @@
 						enabled: false
 					}
 				});
+				
+				heatmapInit(IDcurrent);
 			}
 		}
 
-		$scope.heatmapInit = function(){
+		function heatmapInit(IDcurrent){
 
-			var balHistory = new Array(30);
-			var heatmapData = new Array(30);
+			var heatmapData = [];
 			var dates = [];
+			var balance = [];
 			var temp = 29;
+			var thresholdArray = [];
 			for(var i = 0; i < 30; i++){
-				balHistory[i] = new Array(2);
-				heatmapData[i] = new Array(3);
+				heatmapData.push([]);
 			}
 			for(var i = 0; i < 6; i++){
 				for(var j = 4; j >= 0; j--){
-					heatmapData[temp][0] = j;
-					heatmapData[temp][1] = i;
+					heatmapData[temp].push(j);
+					heatmapData[temp].push(i);
 					temp--;
 				}
 			}
 		
-			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
-				getThreshold(IDcurrent);
-			});
-			
+			getThreshold(IDcurrent);
+
 			function getThreshold(IDcurrent){
 				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
+					for(var i = 0; i < 30; i++){
+						thresholdArray.push(threshold[0]);
+					}
 					getMinBal(IDcurrent, threshold, 29);
 				});	
 			}
 			
 			function getMinBal(IDcurrent, threshold, day){
-				QueryService.queryDatabase("SELECT MAX(Timestamp) AS T, Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " AND Timestamp <= date('now', '" + (-29 + day) + " days')" , "ID", function(prevBal){
-				
-					if (prevBal[0] == null){
-						balHistory[day][0] = null;
-					}
-					else{
-						balHistory[day][0] = prevBal[0];
-					}
-						
-					if (day == 0){
-						getDates(29, threshold);
-					}
-					else {
-						getMinBal(IDcurrent, threshold, day - 1);
-					}
-				});		
-			}
-			
-			function getDates(day, threshold){
-				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-29 + day) + " days')) AS ID" , "ID", function(date){
-				
-					balHistory[day][1] = date;
-					if (day == 0){
-						extractColumns(0, threshold);
-					}
-					else {
-						getDates(day - 1, threshold);
-					}
-				});				
-			}			
+				QueryService.queryDatabase("SELECT MAX(Timestamp) AS T, Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " AND Timestamp <= date('now', 'localtime', '" + (-29 + day) + " days')" , "ID", function(prevBal){
 
-			function extractColumns(row, threshold){
-				if(row == balHistory.length){
-					generateHeatmap(threshold);
-				}
-				else {
-					if (balHistory[row][0] == null) {
-						heatmapData[row][2] = null
+					balance.push(prevBal[0]);	
+					if (prevBal[0] == null){
+						heatmapData[day].push(null);
 					}
 					else {
-						heatmapData[row][2] = (Math.round(balHistory[row][0] * 100) / 100).toFixed(2);
+						heatmapData[day].push((Math.round(prevBal[0] * 100) / 100).toFixed(2));
 					}
-					dates.push(balHistory[row][1]);
-					extractColumns(row + 1, threshold);
-				}
-			}			
+
+					QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', 'localtime', '" + (-29 + day) + " days')) AS ID" , "ID", function(date){				
+						dates.push(date);
+						if (day == 0){
+							dates.reverse();
+							balance.reverse();
+							generateCharts(threshold, IDcurrent);
+						}
+						else {
+							getMinBal(IDcurrent, threshold, day - 1);
+						}
+					});	
+				});		
+			}					
 			
-			function generateHeatmap(threshold){
-			
+			function generateCharts(threshold, IDcurrent){
 				// Build the chart
 				$('#heatmapContainer').highcharts({
-
+					
 					chart: {
 						type: 'heatmap',
 						marginTop: 40,
@@ -889,7 +845,7 @@
 					},
 
 					colorAxis: {
-						max: threshold,
+						max: threshold[0],
 						min: 0,
 						maxColor: '#FFFFFF',
 						minColor: Highcharts.getOptions().colors[3],
@@ -926,96 +882,11 @@
 					exporting: {
 						enabled: false
 					}
-
+				
 				});
+				areaChart();
 			}
-		}
-		
-		$scope.areaChartInit = function(){
-
-			var balHistory = new Array(30);
-			var heatmapData = new Array(30);
-			var balance = [];
-			var thresholdArray = [];
-			var dates = [];
-			var temp = 29;
-			for(var i = 0; i < 30; i++){
-				balHistory[i] = new Array(2);
-				heatmapData[i] = new Array(3);
-			}
-			for(var i = 0; i < 6; i++){
-				for(var j = 4; j >= 0; j--){
-					heatmapData[temp][0] = j;
-					heatmapData[temp][1] = i;
-					temp--;
-				}
-			}
-		
-			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
-				getThreshold(IDcurrent);
-			});
-			
-			function getThreshold(IDcurrent){
-				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
-					getMinBal(IDcurrent, threshold, 29);
-				});	
-			}
-			
-			function getMinBal(IDcurrent, threshold, day){
-				QueryService.queryDatabase("SELECT MAX(Timestamp) AS T, Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " AND Timestamp <= date('now', '" + (-29 + day) + " days')" , "ID", function(prevBal){
-				
-					if (prevBal[0] == null){
-						balHistory[day][0] = null;
-					}
-					else{
-						balHistory[day][0] = prevBal[0];
-					}
-						
-					if (day == 0){
-						getDates(29, threshold);
-					}
-					else {
-						getMinBal(IDcurrent, threshold, day - 1);
-					}
-				});		
-			}
-			
-			function getDates(day, threshold){
-				QueryService.queryDatabase("SELECT strftime('%m/%d', date('now', '" + (-29 + day) + " days')) AS ID" , "ID", function(date){
-				
-					balHistory[day][1] = date;
-					if (day == 0){
-						extractColumns(0, threshold);
-					}
-					else {
-						getDates(day - 1, threshold);
-					}
-				});				
-			}			
-
-			function extractColumns(row, threshold){
-				if(row == balHistory.length){
-					generateAreaChart(threshold);
-				}
-				else {
-					if (balHistory[row][0] == null) {
-						heatmapData[row][2] = null
-					}
-					else {
-						heatmapData[row][2] = (Math.round(balHistory[row][0] * 100) / 100).toFixed(2);
-					}
-					dates.push(balHistory[row][1]);
-					balance.push(balHistory[row][0]);
-					extractColumns(row + 1, threshold);
-				}
-			}
-		
-			function generateAreaChart(threshold){
-				for(var i = 0; i < balance.length; i++){
-					thresholdArray.push(threshold);
-				}
-				
-				
+			function areaChart(){
 				$('#areaChartContainer').highcharts({
 					chart: {
 						type: 'area',
@@ -1025,7 +896,7 @@
 						text: 'Balance History vs. Threshold'
 					},
 					subtitle: {
-							text: 'Previous 30 Days'
+						text: 'Previous 30 Days'
 					},
 
 					legend: {
@@ -1047,6 +918,7 @@
 							text: 'Daily Transaction Amount'
 						}
 					},
+
 					plotOptions: {
 						area: {
 							fillOpacity: 0.5
@@ -1065,10 +937,7 @@
 				});
 			}
 		}
-		
 	});
-	
-	
 	
 	module.controller('SendFeedback', function($scope, QueryService){
 
@@ -1300,7 +1169,7 @@
 			<ons-toolbar modifier="transparent"></ons-toolbar>
 
 			<ons-list class="menu-list">
-				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page0.html', {closeMenu: true})">
+				<ons-list-item class="menu-item" ng-click="menu.setMainPage('page0.html', {closeMenu: true});">
 					<ons-icon icon="ion-home"></ons-icon>
 					Home
 				</ons-list-item>
@@ -1530,22 +1399,22 @@
 
 			<ons-carousel overscrollable auto-scroll fullscreen var="carousel" direction="vertical">
 				<ons-carousel-item>
-					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="pieInit()">
+					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="visualInit()">
 						<div id="pieContainer" style="width: 100%; height: 90%"></div>
 					</div>
 				</ons-carousel-item>
 				<ons-carousel-item>
-					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="barChartInit()">
+					<div class="item-label" ng-controller="VisualizationCtrl">
 						<div id="barChartContainer" style="width: 100%; height: 90%"></div>
 					</div>
 				</ons-carousel-item>
 				<ons-carousel-item>
-					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="heatmapInit()">
+					<div class="item-label" ng-controller="VisualizationCtrl">
 						<div id="heatmapContainer" style="width: 100%; height: 90%"></div>
 					</div>
 				</ons-carousel-item>
 				<ons-carousel-item>
-					<div class="item-label" ng-controller="VisualizationCtrl" data-ng-init="areaChartInit()">
+					<div class="item-label" ng-controller="VisualizationCtrl">
 						<div id="areaChartContainer" style="width: 100%; height: 90%"></div>
 					</div>
 				</ons-carousel-item>
