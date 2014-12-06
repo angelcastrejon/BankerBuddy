@@ -1336,6 +1336,11 @@
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page6.html', {closeMenu: true})">
 				Send feedback
 				</ons-list-item>
+
+				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page7.html', {closeMenu: true})">
+				Help
+				</ons-list-item>
+
 			</ons-list>
 		</ons-page>
 	</ons-template>
@@ -1745,7 +1750,15 @@
 
 
 		</ons-page>
-	</ons-template
+	</ons-template>
+
+	<ons-template id="page7.html">
+		<ons-page id="page7" ng-device-backbutton="menu.toggle()" style="background: #1AAF5D;">
+
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<iframe width="100%" height="215" src="http://www.youtube.com/embed/SuwX9ei_woo?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>
+		</ons-page>
+	</ons-template>
 
 </body>
 </html>
