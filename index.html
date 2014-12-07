@@ -1168,7 +1168,7 @@
 				<div ng-controller="loginCtrl">
 					<img src="img\icon.png" style="position:relative; width: 50%; margin-top:10%">
 					<div style="margin-top:5%;">
-						<ons-icon icon="ion-android-social-user"></ons-icon>
+						<!-- <ons-icon icon="ion-android-social-user"></ons-icon> -->
 						<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
 						  border: solid 3px #fff;
 						  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1177,7 +1177,7 @@
 						  font-size: 100%;">
 					</div>
 					<div style="margin-top:2%;">
-						<ons-icon icon="ion-pound"></ons-icon>
+						<!-- <ons-icon icon="ion-pound"></ons-icon> -->
 						<input type="tel"  class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
 						  border: solid 3px #fff;
 						  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1207,7 +1207,7 @@
 				<ons-col align="center">
 					<img src="img\icon.png" style="width: 50%; margin-top:10%">
 					<div style="margin-top:5%">
-						<ons-icon icon="ion-android-social-user"></ons-icon>
+						<!-- <ons-icon icon="ion-android-social-user"></ons-icon> -->
 						<input type="text" class="text-input" placeholder="Username" ng-model="username" style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1216,7 +1216,7 @@
   					  font-size: 100%;">
 					</div>
 					<div style="margin-top:1%">
-						<ons-icon icon="ion-email"></ons-icon>
+						<!-- <ons-icon icon="ion-email"></ons-icon> -->
 						<input type="text" class="text-input" placeholder="Email" ng-model="email" style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1225,7 +1225,7 @@
   					  font-size: 100%;">
 					</div>  
 					<div style="margin-top:1%">
-						<ons-icon icon="ion-pound"></ons-icon>
+						<!-- <ons-icon icon="ion-pound"></ons-icon> -->
 						<input type="tel" class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1234,7 +1234,7 @@
   					  font-size: 100%;">
 					</div> 
 					<div style="margin-top:1%">
-						<ons-icon icon="ion-pound"></ons-icon>
+						<!-- <ons-icon icon="ion-pound"></ons-icon> -->
 						<input type="tel" class="text-input" placeholder="Confirm Pin" ng-model="confirmpin" style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1256,7 +1256,7 @@
 			<div style="margin-top:6%; margin-left:auto; margin-right:auto; text-align: center; height:320px; width:90%" ng-controller="createCtrl">
 				<img src="img\icon.png" style="width: 50%; margin-top:10%">
 				<div style="margin-top:10%">
-					<ons-icon icon="ion-social-usd-outline"></ons-icon>
+					<!-- <ons-icon icon="ion-social-usd-outline"></ons-icon> -->
 					<input style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1266,7 +1266,7 @@
   					  type="tel" class="text-input" placeholder="Balance" ng-model="balance">
 				</div> 
 				<div style="margin-top:1%">
-					<ons-icon icon="ion-stats-bars"></ons-icon>
+					<!-- <ons-icon icon="ion-stats-bars"></ons-icon> -->
 					<input style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
@@ -1323,22 +1323,27 @@
 
 			<ons-list class="bottom-menu-list">
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page4.html', {closeMenu: true})">
+				<ons-icon icon="ion-gear-b"></ons-icon>
 				Settings
 				</ons-list-item>
 
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page5.html', {closeMenu: true})">
+				<ons-icon icon="ion-pizza"></ons-icon>
 				About `A
 				</ons-list-item>
 
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page6.html', {closeMenu: true})">
+				<ons-icon icon="ion-email"></ons-icon>
 				Send feedback
 				</ons-list-item>
 
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page7.html', {closeMenu: true})">
+				<ons-icon icon="ion-information-circled"></ons-icon>
 				Help
 				</ons-list-item>
 				
 				<ons-list-item class="bottom-menu-item" ng-click="myNavigator.resetToPage('login.html', { animation : 'fade' } )">
+				<ons-icon icon="ion-android-cancel"></ons-icon>
 				Logout
 				</ons-list-item>
 
