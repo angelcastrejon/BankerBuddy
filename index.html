@@ -407,10 +407,6 @@
 				
 					time.reverse();
 					$('#container').highcharts({
-						chart:{
-							backgroundColor:'#D3FECD',
-							showDuration:null
-						},
 					title: {
 						text: 'Balance History',
 						x: -20 //center
@@ -431,7 +427,6 @@
 					tooltip: {
 						valuePrefix: '$'
 					},
-
 					series: [{
 						name: user[0],
 						data: bal
@@ -743,13 +738,10 @@
 				// Build the chart
 				$('#pieContainer').highcharts({
 					chart: {
-						backgroundColor:'#D3FECD',
 						plotBackgroundColor: null,
 						plotBorderWidth: null,
 						plotShadow: false
 					},
-					colors:
-						['#1AAF5D','#3e3e3e'],
 					title: {
 						text: 'Deposits vs. Withdraws'
 					},
@@ -839,8 +831,7 @@
 				
 				$('#barChartContainer').highcharts({
 					chart: {
-						type: 'bar',
-						backgroundColor:'#D3FECD'
+						type: 'bar'
 					},
 					title: {
 						text: 'Daily Deposits and Witdraws'
@@ -871,8 +862,6 @@
 						backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
 						shadow: true
 					},
-					colors:
-						['#1AAF5D','#3e3e3e'],
 					series: [{
 						name: 'Deposits',
 						data: deposits,
@@ -950,7 +939,6 @@
 					
 					chart: {
 						type: 'heatmap',
-						backgroundColor:'#D3FECD',
 						marginTop: 40,
 						marginBottom: 40
 					},
@@ -969,10 +957,10 @@
 					},
 
 					colorAxis: {
-						min: 0,
 						max: threshold[0],
-						minColor:'#D3FECD',
-						maxColor: '#1AAF5D',
+						min: 0,
+						maxColor: '#FFFFFF',
+						minColor: Highcharts.getOptions().colors[3],
 					},
 
 					legend: {
@@ -1014,7 +1002,6 @@
 				$('#areaChartContainer').highcharts({
 					chart: {
 						type: 'area',
-						backgroundColor:'#D3FECD',
 						inverted: true
 					},
 					title: {
@@ -1043,8 +1030,6 @@
 							text: 'Daily Transaction Amount'
 						}
 					},
-					colors:
-						['#1AAF5D','#3e3e3e'],
 
 					plotOptions: {
 						area: {
