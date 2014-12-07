@@ -1094,7 +1094,9 @@
 	});
 	
 	module.controller('SendFeedback', function($scope, QueryService){
-		menu.setMainPage('page0.html', {closeMenu: true});
+		$scope.send = function(){
+			myNavigator.pushPage('app.html', { animation : 'fade' } );
+		}
 	});
   </script>
 
