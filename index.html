@@ -17,7 +17,41 @@
   function onDeviceReady() {
 	var db = window.openDatabase("BankerBuddy", "1.0", "Test DB", 3000000);
 	db.transaction(CreateDatabase, errorDB, successDB);
-  }
+	var pushNotification = window.plugins.pushNotification;
+		pushNotification.register(successHandler, errorHandler,{"senderID":"475109447473","ecb":"onNotificationGCM"});
+	 // result contains any message sent from the plugin call
+	}
+	successHandler = function(result) {
+		//alert('Callback Success! Result = '+result);
+	}
+	errorHandler = function(error) {
+		alert(error);
+	}
+	onNotificationGCM = function(e) {
+		switch( e.event )
+		{
+			case 'registered':
+				if ( e.regid.length > 0 )
+				{
+					console.log("Regid " + e.regid);
+					//alert('registration id = '+e.regid);
+				}
+				break;
+
+			case 'message':
+				// this is the actual push notification. its format depends on the data model from the push server
+				//alert('message = '+e.message+' msgcnt = '+e.msgcnt);
+				break;
+
+			case 'error':
+				alert('GCM error = '+e.msg);
+				break;
+
+			default:
+				alert('An unknown GCM event has occurred');
+				break;
+		}
+	}	
 
   
   function CreateDatabase(tx) {
@@ -28,6 +62,74 @@
 	tx.executeSql("CREATE TABLE IF NOT EXISTS Withdraw (ID INT, Timestamp TEXT, Balance REAL)");
 	tx.executeSql("CREATE TABLE IF NOT EXISTS CurrentID (CurrentUser INT, ID INT)");
 	tx.executeSql("INSERT INTO CurrentID VALUES(0, 0)");
+	
+	//TEST DATA
+	/*
+	tx.executeSql("INSERT INTO Deposit VALUES(1, '2014-11-21 01:00:00', 2361.44)");
+	tx.executeSql("INSERT INTO Deposit VALUES(1, '2014-12-05 01:00:00', 2361.44)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-10 01:00:00', -70)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-11 01:00:00', -275)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-12 01:00:00', -100)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-13 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-14 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-15 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-16 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-17 01:00:00', -70)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-18 01:00:00', -275)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-19 01:00:00', -100)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-20 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-21 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-22 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-23 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-24 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-25 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-26 01:00:00', -40)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-27 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-28 01:00:00', -15)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-29 01:00:00', -13.37)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-11-30 01:00:00', -5)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-01 01:00:00', -1200)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-02 01:00:00', -110)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-03 01:00:00', -350)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-04 01:00:00', -120)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-05 01:00:00', -25)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-06 01:00:00', -10)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-07 01:00:00', -70)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-08 01:00:00', -275)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-09 01:00:00', -100)");
+	tx.executeSql("INSERT INTO Withdraw VALUES(1, '2014-12-10 01:00:00', -15)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-10 01:00:00', 1930)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-11 01:00:00', 1655)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-12 01:00:00', 1555)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-13 01:00:00', 1545)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-14 01:00:00', 1530)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-15 01:00:00', 1520)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-16 01:00:00', 1505)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-17 01:00:00', 1435)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-18 01:00:00', 1160)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-19 01:00:00', 1060)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-20 01:00:00', 1050)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-21 01:00:00', 3396.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-22 01:00:00', 3386.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-23 01:00:00', 3371.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-24 01:00:00', 3361.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-25 01:00:00', 3346.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-26 01:00:00', 3306.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-27 01:00:00', 3296.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-28 01:00:00', 3281.44)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-29 01:00:00', 3268.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-11-30 01:00:00', 3263.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-01 01:00:00', 2063.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-02 01:00:00', 1953.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-03 01:00:00', 1603.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-04 01:00:00', 1483.07)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-05 01:00:00', 3819.51)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-06 01:00:00', 3809.51)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-07 01:00:00', 3739.51)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-08 01:00:00', 3464.51)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-09 01:00:00', 3364.51)");
+	tx.executeSql("INSERT INTO BalanceHistory VALUES(1, '2014-12-10 01:00:00', 3349.51)");
+	*/
   }
   
   function errorDB(error) {
@@ -40,9 +142,10 @@
   </script>
 
   <link rel="stylesheet" href="lib/onsen/css/onsenui.css">  
-  <link rel="stylesheet" href="styles/onsen-css-components.css">  
+  <link rel="stylesheet" href="styles/onsen-css-components-blue-theme.css">  
   <link rel="stylesheet" href="styles/app.css">  
 
+  <script src="js/index.js"></script>
   <script src="lib/onsen/js/angular/angular.js"></script>    
   <script src="lib/onsen/js/onsenui.js"></script>    
   <script src="js/jquery.min.js"></script>
@@ -50,6 +153,7 @@
   <script src="js/highcharts.js"></script>
   <script src="js/modules/exporting.js"></script>
   <script src="js/modules/heatmap.js"></script>
+  <script src="js/PushNotification.js"></script>
  
 
   <script>
@@ -443,32 +547,39 @@
 		}
 		
 		$scope.withdrawYes = function(){
+			
 			withdraw(witAmount);
 		}
 		
 		function withdraw($amount){
 			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
-				insertAmount(IDcurrent);
+				updateBalance(IDcurrent);
 			});		
-			
-			function insertAmount(IDcurrent){
-				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime')," + $amount +")", "", function(insert){
-					updateBalance(IDcurrent);
-				});
-			}
 			
 			function updateBalance(IDcurrent){
 				QueryService.queryDatabase("SELECT Balance AS ID FROM BalanceHistory WHERE ID = " + IDcurrent[0] + " ORDER BY Timestamp DESC LIMIT 1", "ID", function(currentBalance){
 					var newBal = currentBalance[0] + $amount;
-					insertBalance(IDcurrent, newBal);
+					if (currentBalance >= (-1.0 * $amount)){
+						insertBalance(IDcurrent, newBal);
+					}
+					else {
+						alert("Sorry. You don't have enough funds to make that withdraw!");
+					}
+					
 				});
 			}
 			
 			function insertBalance(IDcurrent, newBal){
 				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime'), " + newBal + ")", "", function(insert){
-					myNavigator.pushPage('app.html', { animation : 'fade' } );
+					insertAmount(IDcurrent);
 				});
 			}		
+			
+			function insertAmount(IDcurrent){
+				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime')," + $amount +")", "", function(insert){
+					myNavigator.pushPage('app.html', { animation : 'fade' } );
+				});
+			}
 		}
 	});
 	
@@ -753,7 +864,8 @@
 					},
 					series: [{
 						name: 'Deposits',
-						data: deposits
+						data: deposits,
+						visible: false
 					}, {
 						name: 'Withdraws',
 						data: withdraws
@@ -1035,7 +1147,7 @@
 </ons-navigator>
 
 	<ons-template id="login.html">
-		<ons-page modifier="login" style="background-color:#1AAF5D;">
+		<ons-page modifier="login" style="background-color:#1AAF5D;" ng-device-backbutton="">
 			<ons-col align="center">
 				<div ng-controller="loginCtrl">
 					<img src="img\icon.png" style="position:relative; width: 50%; margin-top:10%">
@@ -1209,6 +1321,10 @@
 				<ons-list-item class="bottom-menu-item" ng-click="menu.setMainPage('page7.html', {closeMenu: true})">
 				Help
 				</ons-list-item>
+				
+				<ons-list-item class="bottom-menu-item" ng-click="myNavigator.resetToPage('login.html', { animation : 'fade' } )">
+				Logout
+				</ons-list-item>
 
 			</ons-list>
 		</ons-page>
@@ -1257,7 +1373,6 @@
 
 	<ons-template id="page1.html">
 		<ons-page id="page1" ng-device-backbutton="menu.toggle()" style="background:#1AAF5D">
-			<div>
 				<ons-toolbar>
 					<div class="left">
 					<ons-toolbar-button ng-click="menu.toggle()">
@@ -1315,8 +1430,8 @@
 							</div>
 						</ons-col>
 					</ons-row>
-
-			</ons-page>
+				</div>
+		</ons-page>
 
 	</ons-template>
 
@@ -1628,6 +1743,7 @@
 		<iframe width="100%" height="215" src="http://www.youtube.com/embed/SuwX9ei_woo?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>
 		</ons-page>
 	</ons-template>
+
 
 </body>
 </html>
