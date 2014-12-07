@@ -235,6 +235,19 @@
 							alert("That Username does not exist.");
 						}
 						else {
+							getThreshold(uname, userID);
+						}
+					});
+				}
+				
+				function getThreshold(uname, userID) {
+					QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE Username = '" + $scope.username + "'", "ID", function(threshold){
+						if(threshold[0] == -1){
+							QueryService.queryDatabase("DELETE FROM Users WHERE ID = " + userID[0], "", function(insert){
+							});
+							alert("That Username does not exist.");
+						}
+						else {
 							getPin(uname, userID);
 						}
 					});
@@ -287,9 +300,16 @@
 				alert("Pin Does Not Match.");
 			}
 			else {
-				QueryService.queryDatabase("SELECT Username FROM Users WHERE Username = '" + $scope.username + "'", "Username", function(uname){
-					if(uname.length != 0){
-						alert("Sorry.  That username is already taken.");
+				QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE Username = '" + $scope.username + "'", "ID", function(thresh){
+					if(thresh.length != 0){
+						if(thresh[0] == -1){
+							QueryService.queryDatabase("DELETE FROM Users WHERE Username = '" + $scope.username + "'", "", function(insert){
+								pushBalance();
+							});
+						}
+						else{
+							alert("Sorry.  That username is already taken.");
+						}
 					}
 					else {
 						pushBalance();
@@ -306,7 +326,7 @@
 			}
 			
 			function insertUser(newID){
-				QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", 0, '" + $scope.email + "', 1, 1)", "", function(insert){
+				QueryService.queryDatabase("INSERT INTO Users VALUES(" + newID + ", '" + $scope.username + "', " + $scope.pin + ", -1, '" + $scope.email + "', 1, 1)", "", function(insert){
 					myNavigator.pushPage('balance.html', { animation : 'slide' } );
 				});
 			}
@@ -318,6 +338,12 @@
 			}
 			else if( !$scope.threshold ){
 				alert("Please Enter an Threshold.");
+			}
+			else if( !$scope.balance < 0){
+				alert("The Balance Cannot be Negative.");
+			}
+			else if( $scope.threshold < 0 ){
+				alert("The threshold Cannot be Negative.");
 			}
 			else {
 				QueryService.queryDatabase("SELECT MAX(ID) AS ID FROM Users", "ID", function(maxID){
@@ -699,7 +725,7 @@
 						}
 						else {
 							if ($scope.newpin != $scope.confirmnewpin){
-								alert("Your pin does not match");
+								alert("Your new pin does not match");
 							}
 							else {
 								updatePin(IDcurrent);
@@ -1068,7 +1094,7 @@
 	});
 	
 	module.controller('SendFeedback', function($scope, QueryService){
-
+		menu.setMainPage('page0.html', {closeMenu: true});
 	});
   </script>
 
@@ -1183,7 +1209,8 @@
 						  box-shadow: inset 3px 3px 6px 0 #707070;
 						  transition: box-shadow 0.3s;
 						  height:50px;
-						  font-size: 100%;">
+						  font-size: 100%;
+						  -webkit-text-security: disc;">
 					</div> 
 					<br>
 				
@@ -1226,12 +1253,13 @@
 					</div>  
 					<div style="margin-top:1%">
 						<!-- <ons-icon icon="ion-pound"></ons-icon> -->
-						<input type="tel" class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
+						<input type="number" class="text-input" placeholder="Pin" ng-model="pin" style="padding: 10px;
   					  border: solid 3px #fff;
   					  box-shadow: inset 3px 3px 6px 0 #707070;
   					  transition: box-shadow 0.3s;
   					  height:50px;
-  					  font-size: 100%;">
+  					  font-size: 100%;
+					  -webkit-text-security: disc;">
 					</div> 
 					<div style="margin-top:1%">
 						<!-- <ons-icon icon="ion-pound"></ons-icon> -->
@@ -1240,7 +1268,8 @@
   					  box-shadow: inset 3px 3px 6px 0 #707070;
   					  transition: box-shadow 0.3s;
   					  height:50px;
-  					  font-size: 100%;">
+  					  font-size: 100%;
+					  -webkit-text-security: disc;">
 					</div> 
 					<br>
 					<ons-button modifier="" ng-click="createAccount()">Continue
@@ -1598,15 +1627,15 @@
 				<ons-list-header>Pin</ons-list-header>
 
 				<ons-list-item>
-					<input type="tel" ng-model="oldpin" placeholder="Old Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+					<input type="tel" ng-model="oldpin" placeholder="Old Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%; -webkit-text-security: disc;">
 				</ons-list-item>
 
 				<ons-list-item>
-					<input type="tel" ng-model="newpin" placeholder="New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+					<input type="tel" ng-model="newpin" placeholder="New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%; -webkit-text-security: disc;">
 				</ons-list-item>
 				
 				<ons-list-item>
-					<input type="tel" ng-model="confirmnewpin" placeholder="Confirm New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%;">
+					<input type="tel" ng-model="confirmnewpin" placeholder="Confirm New Pin" class="text-input text-input--transparent" style="margin-top:8px; width: 100%; -webkit-text-security: disc;">
 				</ons-list-item>
 				
 				<ons-list-header>Notifications</ons-list-header>
