@@ -602,13 +602,18 @@
 			
 			function insertBalance(IDcurrent, newBal){
 				QueryService.queryDatabase("INSERT INTO BalanceHistory VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime'), " + newBal + ")", "", function(insert){
-					insertAmount(IDcurrent);
+					insertAmount(IDcurrent, newBal);
 				});
 			}		
 			
-			function insertAmount(IDcurrent){
+			function insertAmount(IDcurrent, newBal){
 				QueryService.queryDatabase("INSERT INTO Withdraw VALUES(" + IDcurrent[0] + ", datetime('now', 'localtime')," + $amount +")", "", function(insert){
-					myNavigator.pushPage('app.html', { animation : 'fade' } );
+					QueryService.queryDatabase("SELECT Threshold AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(threshold){
+						if (newBal < threshold[0]){
+							alert("Your balance has dropped below your threshold!!");
+						}
+						myNavigator.pushPage('app.html', { animation : 'fade' } );
+					});
 				});
 			}
 		}
@@ -1554,7 +1559,7 @@
 	</ons-template>
 	 
 	<ons-template id="page3.html">
-		<ons-page id="page3" ng-device-backbutton="menu.toggle()" style="background: white">
+		<ons-page id="page3" ng-device-backbutton="menu.toggle()" style="background: #D3FECD">
 			<ons-toolbar>
 				<div class="left">
 				<ons-toolbar-button ng-click="menu.toggle()">
@@ -1604,7 +1609,7 @@
 			</ons-toolbar>
 			<!-- style="background: #1AAF5D; is dark green -->
 			<!-- background: #D3FECD; is the light green -->
-			<div style="padding: 8px;  box-shadow: 0px 10px 5px #3e3e3e; background: #D3FECD;" ng-controller="SettingsCtrl"> 
+			<div style=" padding: 8px;  box-shadow: 0px 10px 5px #3e3e3e; background: #D3FECD;" ng-controller="SettingsCtrl"> 
 			<!-- <div ng-controller="SettingsCtrl">  -->
 			<ons-list>
 				<div data-ng-init="init()">
