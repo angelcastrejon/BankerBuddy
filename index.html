@@ -1099,7 +1099,21 @@
 	});
 	
 	module.controller('SendFeedback', function($scope, QueryService){
+		$scope.subject = "";
+		$scope.description = "";
+		$scope.feedbackType = "Comment";
 		$scope.send = function(){
+			QueryService.queryDatabase("SELECT ID FROM CurrentID WHERE CurrentUser = 0", "ID", function(IDcurrent){
+				QueryService.queryDatabase("SELECT Email AS ID FROM Users WHERE ID = " + IDcurrent[0], "ID", function(email){
+					cordova.plugins.email.open({
+						to:      'BankerBuddyFeedback@gmail.com',
+						cc:      email[0],
+						bcc:     '',
+						subject: $scope.feedbackType + ': ' + $scope.subject,
+						body:    $scope.description
+					});
+				});
+			});	
 			myNavigator.pushPage('app.html', { animation : 'fade' } );
 		}
 	});
@@ -1752,7 +1766,7 @@
 					<ons-list-item>
 						<div style="margin-left: 15px;">
 							<label class="radio-button">
-							<input type="radio" name="type" ng-model="feedbackType">
+							<input type="radio" name="type" ng-model="feedbackType" value="Comment">
 							<div class="radio-button__checkmark"></div>
 							Comment
 							</label>
@@ -1762,7 +1776,7 @@
 					<ons-list-item>	
 						<div style="margin-left: 15px;">
 							<label class="radio-button">
-							<input type="radio" name="type" ng-model="feedbackType">
+							<input type="radio" name="type" ng-model="feedbackType" value="Bug">
 							<div class="radio-button__checkmark"></div>
 							Bug
 							</label>
