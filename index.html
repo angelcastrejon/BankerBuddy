@@ -1776,10 +1776,38 @@
 	</ons-template>
 
 	<ons-template id="page7.html">
-		<ons-page id="page7" ng-device-backbutton="menu.toggle()" style="background: #1AAF5D;">
+		<ons-toolbar>
+			<div class="left">
+				<ons-toolbar-button ng-click="menu.toggle()">
+				<ons-icon icon="ion-navicon" size="28px" fixed-width="false"></ons-icon>
+				</ons-toolbar-button>
+			</div>
+			<div class="center">Help</div>
+		</ons-toolbar>
 
-			<meta name="viewport" content="width=device-width, user-scalable=no">
-			<iframe width="100%" height="100%" src="http://www.youtube.com/embed/SuwX9ei_woo?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>
+		<ons-page id="page7" ng-device-backbutton="menu.toggle()" style="background: #1AAF5D;" name="viewport" content="width-device-width, user-scalable=no">
+		<iframe width="100%" height="420" src="http://www.youtube.com/embed/eq9zlkCOFRg" frameborder="0" allowfullscreen></iframe>
+
+	      <ons-scroller>
+	        <ons-list >
+	          <ons-list-header style="background:#1AAF5D">How do I Deposit?</ons-list-header>
+	          <ons-list-item style="background:#D3FECD">Depositing money could not be any easier. Press the back button from any screen and select deposit. Just select a predetermined amount or other. Verify that is the correct amount and you are done. </ons-list-item>
+	          
+	          <ons-list-header style="background:#1AAF5D">How do I Withdraw? </ons-list-header>
+	          <ons-list-item style="background:#D3FECD">To remove funds from your account just press the back button from any screen and select withdraw. Select a predetermined amount or other. Verify this amount is correct and the transaction is completed.</ons-list-item>
+	          
+	          <ons-list-header style="background:#1AAF5D">What settings can I change?</ons-list-header>
+	          <ons-list-item style="background:#D3FECD">To reach the settings page just press that back button. Once there you can modify your username, email, threshhold, pin, and state of email and push notifications. Make sure to press the save button at the bottom to make any changes permanent.</ons-list-item>
+	          
+	          <ons-list-header style="background:#1AAF5D">How do I contact the development team?</ons-list-header>
+	          <ons-list-item style="background:#D3FECD">To contact us just head on over to the Send Feedback tab by pressing the back button. Then just fill out the form with your message and we will get back to you! </ons-list-item>
+	          
+
+	        </ons-list>
+	    	</ons-scroller>
+
+
+		</div>
 		</ons-page>
 	</ons-template>
 
